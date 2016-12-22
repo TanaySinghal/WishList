@@ -1,0 +1,6 @@
+framework module Pods_LoginSwift {
+  umbrella header "Pods-LoginSwift-umbrella.h"
+
+  export *
+  module * { export * }
+}
