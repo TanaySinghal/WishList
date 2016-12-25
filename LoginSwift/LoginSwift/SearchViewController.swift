@@ -9,6 +9,7 @@
 import UIKit
 import Alamofire
 
+
 class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     // Check this out: https://www.raywenderlich.com/113772/uisearchcontroller-tutorial
@@ -21,27 +22,27 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         var image: UIImage?
     }
     
-    @IBOutlet weak var tableView: UITableView!
-    
     var searchResults = [SearchResult]()
     
+    struct Cache {
+        var username: String
+        var image: UIImage?
+    }
+    
+    var caches = [Cache]()
+    let maxCacheSize = 20
+    
+    @IBOutlet weak var tableView: UITableView!
+    
     let searchController = UISearchController(searchResultsController: nil)
-    
-    // Some notes:
-    // The way image "caching" kind of works is: if the old search had the same user, use that image
-    
-    // But we want to improve this..
-    // TODO: Store an association list (username, image), sorted by username of a maximum length of 20. 
-        // For each new search result, check if it is in association list (using binary search)
-        // If so, then set it to that image. Otherwise don't
-        // We now no longer need to store "image" in SearchResult
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        
+        // Set up search controller
         searchController.searchResultsUpdater = self
-        //searchController.searchBar.delegate = self
         definesPresentationContext = true
         searchController.dimsBackgroundDuringPresentation = false
         
@@ -62,7 +63,6 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
     }
     
     // MARK: - Search
-    
     func filterContentForSearchText(searchText: String, scope: String = "All") {
         
         // Stream data in background queue
@@ -98,9 +98,6 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
     func refreshTableWithJson(JSON: Any) {
         
         
-        // Remember old search result. When you update, only update images that are new
-        let oldSearchResults = searchResults
-        
         // Reset friendDetails
         searchResults = [SearchResult]()
         
@@ -135,12 +132,9 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
             // Update image in search results that we already had from old search results
             for i in 0...(searchResults.count - 1) {
                 
-                // If this is in old search results, update image
-                if let result = usernameInSearchResults(targetUsername: searchResults[i].username, results: oldSearchResults) {
-                    
-                    searchResults[i].image = result.image
-                    
-                }
+                // Get image from cache
+                let username = searchResults[i].username
+                searchResults[i].image = getImageInCache(username: username)
             }
             
             
@@ -160,33 +154,31 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
     }
     
     
-    
-    func usernameInSearchResults(targetUsername: String, results: [SearchResult]) -> SearchResult? {
-        // Binary search algorithm
-        var min = 0
-        var max = results.count - 1
-        
-        while (true) {
-            if min > max {
-                return nil
-            }
-            
-            let guess = (min+max)/2
-            let usernameAtGuess = results[guess].username
-            
-            if usernameAtGuess == targetUsername {
-                return results[guess]
-            }
-            if usernameAtGuess < targetUsername {
-                min = guess + 1
-                continue
-            }
-            if usernameAtGuess > targetUsername {
-                max = guess - 1
-                continue
-            }
+    // MARK: - CACHE
+    func getImageInCache(username: String) -> UIImage? {
+        let cacheResults = caches.filter{$0.username == username}
+        if cacheResults.count == 0 {
+            return nil
+        }
+        else if cacheResults.count == 1 {
+            return cacheResults[0].image
+        }
+        else {
+            print("ERROR in searchImageInCache: more than 1 matches found for username. Cache results: \(cacheResults)")
+            return nil
         }
     }
+    
+    func addImageToCache(username: String, image: UIImage) {
+        let newCache = Cache(username: username, image: image)
+        caches.append(newCache)
+        
+        // Keep caches array limited
+        if caches.count > maxCacheSize {
+            caches.removeFirst()
+        }
+    }
+    
     
     // MARK: - Table View
     func reloadTable() {
@@ -206,21 +198,25 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         
         let row = indexPath.row
         
+        let username = searchResults[row].username
         let fbUserId = searchResults[row].fbUserId
         
         if searchResults[row].image == nil {
             
             HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 200, height: 200) { image in
                 
-                print("Loading image")
+                print("Loading image for username \(username)")
                 cell.profileImage.image = image
                 self.searchResults[row].image = image
+                
+                self.addImageToCache(username: username, image: image!)
             }
     
         }
         else {
             cell.profileImage.image = searchResults[row].image
         }
+        
         cell.nameLabel.text = searchResults[row].fullName
         cell.usernameLabel.text = searchResults[row].username
         
@@ -237,8 +233,6 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         //remove search controller
         searchController.view!.removeFromSuperview()
     }
-
-    //searchResultCell
     
     /*
     // MARK: - Navigation
@@ -249,22 +243,15 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         // Pass the selected object to the new view controller.
     }
     */
-
+    
 }
 
-
-
-/*extension SearchViewController: UISearchBarDelegate {
-    // MARK: - UISearchResultsUpdating Delegate
-    func searchBar(searchBar: UISearchBar) {
-        filterContentForSearchText(searchText: searchBar.text!)
-    }
-}*/
 
 extension SearchViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         filterContentForSearchText(searchText: searchController.searchBar.text!)
     }
 }
+
 
 
