@@ -128,7 +128,10 @@ class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewD
         let row = indexPath.row
         
         let fbUserId = friendDetails[row].fbUserId
-        HelperFunctions().loadImageFromFacebook(imageView: cell.profileImage, facebookUserId: fbUserId, width: 200, height: 200)
+        HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 200, height: 200) { image in
+            cell.profileImage.image = image
+        }
+        
         cell.nameLabel.text = friendDetails[row].fullName
         cell.usernameLabel.text = friendDetails[row].username
         

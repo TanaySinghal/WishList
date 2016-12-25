@@ -164,7 +164,11 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
         let row = indexPath.row
         
         let fbUserId = requestSenders[row].fbUserId
-        HelperFunctions().loadImageFromFacebook(imageView: cell.profileImage, facebookUserId: fbUserId, width: 200, height: 200)
+        
+        HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 200, height: 200) { image in
+            cell.profileImage.image = image
+        }
+        
         cell.fullNameLabel.text = requestSenders[row].fullName
         cell.usernameLabel.text = requestSenders[row].username
         

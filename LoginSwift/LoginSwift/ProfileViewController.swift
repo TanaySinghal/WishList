@@ -115,9 +115,13 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
             nameLabel.text = fullName
             aboutMeLabel.text = aboutMe
             // TODO: If not friends, hide mailing address, and show button
-            mailingAddressLabel.text = address
+            mailingAddressLabel.text = address 
             
-            HelperFunctions().loadImageFromFacebook(imageView: profileImage, facebookUserId: fbUserId, width: 360, height: 360)
+            
+            HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 360, height: 360) { image in
+                self.profileImage.image = image
+            }
+            
         }
         
         reloadTable()

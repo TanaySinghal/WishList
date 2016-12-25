@@ -30,7 +30,7 @@ class HelperFunctions {
     // Changes the imageView to the image in the URL
     // Usage example: 
     // HelperFunctions().loadImageFromUrl(imageView, imageUrl)
-    func loadImageFromUrl(imageView: UIImageView, imageUrl: String) {
+    /*func loadImageFromUrl(imageView: UIImageView, imageUrl: String) {
         
         // Create Url from string
         let url = NSURL(string: imageUrl)!
@@ -56,17 +56,13 @@ class HelperFunctions {
         // Run task
         task.resume()
         
-    }
-
-    //func hardProcessingWithString(input: String, completion: (result: String) -> Void) {
-    //...
-    //completion("we finished!")
-//}
+    }*/
     
-    func loadImageFromFacebookWithCompletion(facebookUserId: String, width: Int, height: Int, completionHandler:@escaping (UIImage?) -> ()) {
+    
+    
+    func loadImageFromUrlWithCompletion(imageUrl: String, completionHandler: @escaping (UIImage?) -> ()) {
         
         // Create Url from string
-        let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)&height=\(height)"
         let url = NSURL(string: imageUrl)!
         
         // Download task:
@@ -77,12 +73,10 @@ class HelperFunctions {
                 completionHandler(nil)
             }
             
-            // if responseData is not null...
             if let data = responseData{
                 
                 // execute in UI thread
                 DispatchQueue.main.async {
-                    //UIImage(data: data)
                     completionHandler(UIImage(data: data))
                 }
             }
@@ -90,12 +84,45 @@ class HelperFunctions {
         
         // Run task
         task.resume()
-    }
- 
-    func loadImageFromFacebook(imageView: UIImageView, facebookUserId: String, width: Int, height: Int) {
-        let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)&height=\(height)"
-        loadImageFromUrl(imageView: imageView, imageUrl: imageUrl)
+        
     }
     
+    /* Usage:
+    HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 200, height: 200) { image in
+    
+     // Do something with image
+     // Example:
+     // profileImage.image = image
+    }*/
+    
+    func loadImageFromFacebookWithCompletion(facebookUserId: String, width: Int, height: Int, completionHandler:@escaping (UIImage?) -> ()) {
+        
+        // Create Url from string
+        let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)&height=\(height)"
+        //let url = NSURL(string: imageUrl)!
+        
+        loadImageFromUrlWithCompletion(imageUrl: imageUrl) { image in
+                // Do something
+            completionHandler(image)
+        }
+        // Download task:
+        /*let task = URLSession.shared.dataTask(with: url as URL) { (responseData, responseUrl, error) -> Void in
+            
+            if error != nil {
+                print("ERROR getting image \(error!.localizedDescription)")
+                completionHandler(nil)
+            }
+            
+            if let data = responseData {
+                
+                DispatchQueue.main.async {
+                    completionHandler(UIImage(data: data))
+                }
+            }
+        }
+        
+        // Run task
+        task.resume()*/
+    }
     
 }

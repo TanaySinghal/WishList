@@ -27,6 +27,15 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     let searchController = UISearchController(searchResultsController: nil)
     
+    // Some notes:
+    // The way image "caching" kind of works is: if the old search had the same user, use that image
+    
+    // But we want to improve this..
+    // TODO: Store an association list (username, image), sorted by username of a maximum length of 20. 
+        // For each new search result, check if it is in association list (using binary search)
+        // If so, then set it to that image. Otherwise don't
+        // We now no longer need to store "image" in SearchResult
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -198,14 +207,16 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         let row = indexPath.row
         
         let fbUserId = searchResults[row].fbUserId
-        //HelperFunctions().loadImageFromFacebook(imageView: cell.profileImage, facebookUserId: fbUserId, width: 200)
         
         if searchResults[row].image == nil {
-            //searchResults[row].image = cell.profileImage
-            HelperFunctions().loadImageFromFacebook(imageView: cell.profileImage, facebookUserId: fbUserId, width: 200, height: 200)
             
-            HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: <#T##String#>, width: <#T##Int#>, height: <#T##Int#>, completionHandler: <#T##(UIImage?) -> ()#>)
-            // Somehow update searchResults[row].image
+            HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 200, height: 200) { image in
+                
+                print("Loading image")
+                cell.profileImage.image = image
+                self.searchResults[row].image = image
+            }
+    
         }
         else {
             cell.profileImage.image = searchResults[row].image
