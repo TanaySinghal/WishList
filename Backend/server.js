@@ -26,9 +26,14 @@ var user_api = require('./controllers/user_api.js');
 app.post('/user/authorize_from_fb', user_api.authorize_from_fb);
 app.get('/user/find_by_id/:user_id', user_api.find_by_id);
 app.post('/user/update/:user_id', user_api.update);
-app.post('/user/add_friend', user_api.add_friend);
+app.post('/user/search', user_api.search);
+
+// Friends
+app.get('/user/list_friends/:user_id', user_api.list_friends);
 app.post('/user/remove_friend', user_api.remove_friend);
 
+
+// Friend requests
 app.post('/user/send_friend_request', user_api.send_friend_request);
 app.get('/user/friend_request_count/:user_id', user_api.friend_request_count);
 app.get('/user/list_friend_requests/:user_id', user_api.list_friend_requests);

@@ -109,9 +109,35 @@ exports.update = function(req, res) {
 	});
 }
 
+/*{
+	"search_text": "fb2"
+}*/
+exports.search = function (req, res) {
+
+	var search_text = req.body.search_text;
+
+	var query = {
+		$or: [
+			 {username: { "$regex": search_text, "$options": "i" }},
+			 {first_name: { "$regex": search_text, "$options": "i" }},
+			 {last_name: { "$regex": search_text, "$options": "i" }}
+		 ]
+	 };
+
+	User.find(query, function (err, user) {
+			if(err) {
+				res.send("ERROR: \n" + err);
+				return;
+			}
+
+			res.json(user);
+			// sort in ascending order by username
+	}).limit(20).sort({username: 1});
+}
+
 // MARK - Friends
 // GET friends
-exports.list_friend_requests = function (req, res) {
+exports.list_friends = function (req, res) {
 	var user_id = req.params.user_id;
 
 	User.findOne({_id: user_id}, function (err, user) {
@@ -124,50 +150,6 @@ exports.list_friend_requests = function (req, res) {
 	}).populate('friends');
 }
 
-
-// Sample json:
-/*{
-  "user_id": "....",
-  "friend_id": "...."
-}*/
-exports.add_friend = function (req, res) {
-	var user_id = req.body.user_id;
-	var friend_id = req.body.friend_id;
-
-	// Search for this user
-	User.findOne({_id : user_id}, function(err, user) {
-		if(err) {
-			res.send("ERROR: \n" + err);
-			return;
-		}
-
-		// Search for friend
-		User.findOne({_id: friend_id}, function (err, friend) {
-			if(err) {
-				res.send("ERROR: \n" + err);
-				return;
-			}
-
-			// Check if already friends
-			if (hf.contains(user.friends, friend._id) ||
-					hf.contains(friend.friends, user._id)) {
-					res.send("Already friends.");
-					return;
-			}
-
-			// Add each other as friends
-			user.friends.push(friend._id);
-			friend.friends.push(user._id);
-
-			// Update users
-			friend.save();
-			user.save();
-
-			res.send(user);
-		});
-
-	});
-}
 
 // Sample json:
 /*{
@@ -207,7 +189,8 @@ exports.remove_friend = function (req, res) {
 			friend.save();
 			user.save();
 
-			res.send(user);
+			// Send friend
+			res.send(friend);
 		});
 
 	});
@@ -224,17 +207,50 @@ exports.send_friend_request = function(req, res) {
 		var from_user_id = req.body.from_user_id;
 		var to_user_id = req.body.to_user_id;
 
-		User.findOne({_id: to_user_id}, function (err, to_user) {
-				if(err) {
-					res.send("ERROR: \n" + err);
-					return;
-				}
+		var query1 = {
+			_id: from_user_id,
+			// Make sure we're not already friends
+			friends: {$ne: to_user_id},
+			// Make sure I haven't received a request already
+			friend_requests: {$ne: to_user_id},
+			// Make sure I haven't sent a request already
+			sent_friend_requests: {$ne: to_user_id}
+		}
 
-				to_user.friend_requests.push(from_user_id);
-				to_user.save();
+		var update1 = {
+			// Add that I sent them a friend request
+			$addToSet: { sent_friend_requests: to_user_id }
+		}
 
-				// Don't know what to return, so I'll just return to_user
-				res.json(to_user);
+		User.update(query1, update1, function (err, to_user) {
+
+			if(err) {
+				res.send("ERROR: \n" + err);
+				return;
+			}
+
+			var query2 = {
+				_id: to_user_id,
+				// Make sure we're not already friends
+				friends: {$ne: from_user_id},
+				// Make sure they haven't received a request from me already
+				friend_requests: {$ne: from_user_id},
+				// Make sure they haven't sent a request to me already
+				sent_friend_requests: {$ne: from_user_id}
+			}
+			var update2 = {
+				// Send them a friend request
+		    $addToSet: { friend_requests: from_user_id }
+			}
+
+			User.update(query2, update2, function(err, to_user) {
+					if(err) {
+						res.send("ERROR: \n" + err);
+						return;
+					}
+
+					res.json(to_user);
+			});
 		});
 }
 
@@ -274,26 +290,40 @@ exports.list_friend_requests = function (req, res) {
   "user_id": "...."
 }*/
 exports.remove_friend_request = function (req, res) {
-		var sender_id = req.body.sender_id;
+
 		var user_id = req.body.user_id;
+		var sender_id = req.body.sender_id;
 
-		User.findOne({_id: user_id}, function (err, user) {
-				if(err) {
-					res.send("ERROR: \n" + err);
-					return;
-				}
+		// Search for sender
+		var query1 = { _id: sender_id}
+		// Remove user from sender's sent friend requests
+		var action1 = { "$pull": { "sent_friend_requests": user_id } }
 
-				if (!(hf.contains(user.friend_requests, sender_id))) {
-						res.send("Friend request is non-existant");
+		User.update(query1, action1, {"multi": true}, function (err, sender) {
+
+			if(err) {
+				res.send("ERROR: \n" + err);
+				return;
+			}
+
+			// Search for my user
+			var query2 = { _id: user_id}
+			// Remove sender from user's friend requests
+			var action2 = { "$pull": { "friend_requests": sender_id } }
+
+			User.findOneAndUpdate(query2, action2, {"multi": true}, function (err, user) {
+					if(err) {
+						res.send("ERROR: \n" + err);
 						return;
-				}
+					}
 
-				user.friend_requests.pull(sender_id);
-				user.save();
+					// Return new list of friend requests
+					User.findOne(query2, function(err, user) {
+						res.json(user.friend_requests);
+					}).populate('friend_requests');
 
-				// Return new list of friend requests
-				res.json(user.friend_requests);
-		}).populate('friend_requests');
+			})
+		});
 }
 
 
@@ -303,47 +333,55 @@ exports.remove_friend_request = function (req, res) {
   "user_id": "...."
 }*/
 exports.accept_friend_request = function(req, res) {
-		var sender_id = req.body.sender_id;
-		var user_id = req.body.user_id;
 
-		User.findOne({_id: user_id}, function (err, user) {
+	// Make sure not already friends...
+	var user_id = req.body.user_id;
+	var sender_id = req.body.sender_id;
+
+	// Search for sender
+	var query1 = {
+		_id: sender_id,
+		// If not friends already
+		friends: {$ne: sender_id}
+	}
+	var action1 = {
+		// Remove user from sender's sent friend requests
+		$pull: { sent_friend_requests: user_id },
+		// Add user as friend
+		$addToSet: { friends: user_id }
+	}
+
+	User.update(query1, action1, {"multi": true}, function (err, sender) {
+
+		if(err) {
+			res.send("ERROR: \n" + err);
+			return;
+		}
+
+		// Search for my user
+		var query2 = {
+			_id: user_id,
+			// If not friends already
+			friends: {$ne: sender_id}
+		}
+		var action2 = {
+			// Remove sender from user's friend requests
+			$pull: { friend_requests: sender_id },
+			// Add sender as friend
+			$addToSet: { friends: sender_id }
+		}
+
+		User.findOneAndUpdate(query2, action2, {"multi": true}, function (err, user) {
 				if(err) {
 					res.send("ERROR: \n" + err);
 					return;
 				}
 
-				// Remove friend request
-				if (!(hf.contains(user.friend_requests, sender_id))) {
-						res.send("Friend request is non-existant");
-						return;
-				}
-
-				user.friend_requests.pull(sender_id);
-
-				// Add friends... search for sender first
-				User.findOne({_id: sender_id}, function (err, sender) {
-					if(err) {
-						res.send("ERROR: \n" + err);
-						return;
-					}
-
-					// Check if already friends
-					if (hf.contains(user.friends, sender._id) ||
-							hf.contains(sender.friends, user._id)) {
-							res.send("Error: already friends.");
-							return;
-					}
-
-					// Add each other as friends
-					user.friends.push(sender._id);
-					sender.friends.push(user._id);
-
-					// Update users
-					sender.save();
-					user.save();
-
-					// Return new list of friend requests
+				// Return new list of friend requests
+				User.findOne({_id: user_id}, function(err, user) {
 					res.json(user.friend_requests);
-				});
-		}).populate('friend_requests');
+				}).populate('friend_requests');
+
+		})
+	});
 }

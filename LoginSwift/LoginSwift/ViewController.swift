@@ -32,7 +32,7 @@ class ViewController: UIViewController, LoginButtonDelegate {
             print("User id is \(accessToken.userId)")
         }
         else {
-            print("VC: Not logged in already...")
+            //print("VC: Not logged in already...")
             let loginButton = LoginButton(readPermissions: [ .publicProfile, .email, .userFriends])
             loginButton.center = view.center
             loginButton.delegate = self
@@ -91,7 +91,7 @@ class ViewController: UIViewController, LoginButtonDelegate {
                         case .success(let value):
                             
                             if let JSON = response.result.value {
-                                print("User JSON:\n \(JSON)")
+                                //print("User JSON:\n \(JSON)")
                                 
                                 
                                 // Parse JSON so we get some values...

@@ -40,6 +40,7 @@ class HelperFunctions {
             
             if error != nil {
                 print("ERROR getting image \(error!.localizedDescription)")
+                return
             }
             
             // if responseData is not null...
@@ -54,11 +55,45 @@ class HelperFunctions {
         
         // Run task
         task.resume()
+        
     }
+
+    //func hardProcessingWithString(input: String, completion: (result: String) -> Void) {
+    //...
+    //completion("we finished!")
+//}
     
-    
-    func loadImageFromFacebook(imageView: UIImageView, facebookUserId: String, width: Int) {
-        let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)"
+    func loadImageFromFacebookWithCompletion(facebookUserId: String, width: Int, height: Int, completionHandler:@escaping (UIImage?) -> ()) {
+        
+        // Create Url from string
+        let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)&height=\(height)"
+        let url = NSURL(string: imageUrl)!
+        
+        // Download task:
+        let task = URLSession.shared.dataTask(with: url as URL) { (responseData, responseUrl, error) -> Void in
+            
+            if error != nil {
+                print("ERROR getting image \(error!.localizedDescription)")
+                completionHandler(nil)
+            }
+            
+            // if responseData is not null...
+            if let data = responseData{
+                
+                // execute in UI thread
+                DispatchQueue.main.async {
+                    //UIImage(data: data)
+                    completionHandler(UIImage(data: data))
+                }
+            }
+        }
+        
+        // Run task
+        task.resume()
+    }
+ 
+    func loadImageFromFacebook(imageView: UIImageView, facebookUserId: String, width: Int, height: Int) {
+        let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)&height=\(height)"
         loadImageFromUrl(imageView: imageView, imageUrl: imageUrl)
     }
     

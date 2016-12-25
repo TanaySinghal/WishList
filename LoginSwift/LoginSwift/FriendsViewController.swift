@@ -1,5 +1,5 @@
 //
-//  FriendRequestsViewController.swift
+//  FriendsViewController.swift
 //  LoginSwift
 //
 //  Created by Tanay Singhal on 12/22/16.
@@ -9,31 +9,31 @@
 import UIKit
 import Alamofire
 
-class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, FriendRequestCellDelegate {
+class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
-    @IBOutlet weak var navBar: UINavigationItem!
-    
     @IBOutlet weak var tableView: UITableView!
     
-    struct RequestSender {
+    @IBOutlet weak var navBar: UINavigationItem!
+    
+    struct FriendDetail {
         var id: String
         var fbUserId: String
         var fullName: String
         var username: String
     }
     
-    var requestSenders = [RequestSender]()
+    var friendDetails = [FriendDetail]()
     
     var userId: String?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // Do any additional setup after loading the view.
         userId = UserDefaults.standard.string(forKey: "user_id")
         
         // Send GET request to find friend requests
-        Alamofire.request("http://localhost:8080/user/list_friend_requests/" + userId!).responseJSON { response in
+        Alamofire.request("http://localhost:8080/user/list_friends/" + userId!).responseJSON { response in
             // New code
             switch response.result {
             case .success(let value):
@@ -41,36 +41,33 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
                     self.refreshTableWithJson(JSON: JSON)
                 }
                 else {
-                    print("Failed to serialize JSON in FriendRequestVC. Here is the result: \(value)")
+                    print("Failed to serialize JSON in FriendsVC. Here is the result: \(value)")
                 }
                 
             case .failure(let error):
-                print("Get request from FriendRequestVC failed: \(error)")
+                print("Get request from FriendsVC failed: \(error)")
             }
         }
-        
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        reloadTable()
-    }
-    
-    
-    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
     
 
+    override func viewDidAppear(_ animated: Bool) {
+        //reloadTable()
+    }
     
-    // Also reloads table
+    
+    
     func refreshTableWithJson(JSON: Any) {
         
-        // First reset requestSenders
-        requestSenders = [RequestSender]()
+        // Reset friendDetails
+        friendDetails = [FriendDetail]()
         
-        // Next go through array
+        // Go through array
         if let jsonArray = JSON as? NSMutableArray {
             
             let parser = JSONParser()
@@ -86,14 +83,14 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
                 let username = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "username")
                 
                 // Create new WishDetail
-                let newRequestSender = RequestSender(
+                let newFriendDetail = FriendDetail(
                     id: id!,
                     fbUserId: fbUserId!,
                     fullName: fullName,
                     username: username!
                 )
                 
-                requestSenders.append(newRequestSender)
+                friendDetails.append(newFriendDetail)
                 
             }
         }
@@ -101,76 +98,39 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
             // There are no friend requests..
         }
         else {
-            print("FriendRequestVC: JSON is not valid. Here is the JSON: \(JSON)")
+            print("FriendsVC: JSON is not valid. Here is the JSON: \(JSON)")
         }
         
         
         // Reload table to see change
         DispatchQueue.main.async{
-            self.navBar.title = "Friend Requests (\(self.requestSenders.count))"
+            self.navBar.title = "My Friends (\(self.friendDetails.count))"
             self.reloadTable()
-        }
-    }
-    
-    
-    // MARK: - FriendRequestCellDelegate
-    func modifyFriendRequest(action: String, cell: FriendRequestCell) {
-        
-        // Create JSON
-        let parameters: Parameters = [
-            "sender_id": cell.senderId!,
-            // TODO: Make sure not empty
-            "user_id": userId!
-        ]
-        
-        // Send post request to accept friend request. This returns a JSON with a new list of friend requests, after removing this one.
-        Alamofire.request("http://localhost:8080/user/\(action)_friend_request", method: .post, parameters: parameters, encoding: JSONEncoding.default).responseJSON { response in
-            switch response.result {
-            case .success(let value):
-                
-                if let JSON = response.result.value {
-                    
-                    // Reset table with new data
-                    self.refreshTableWithJson(JSON: JSON)
-                    
-                }
-                else {
-                    print("Failed to serialize JSON in FriendRequestVC. Here is the result: \(value)")
-                }
-                
-            case .failure(let error):
-                print("Post request from FriendRequestVC failed: \(error)")
-            }
         }
     }
     
     
     // MARK: - Table
     func reloadTable() {
-        tableView.estimatedRowHeight = 102
-        tableView.rowHeight = UITableViewAutomaticDimension
         tableView.delegate = self
         tableView.dataSource = self
         tableView.reloadData()
     }
-
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return requestSenders.count
+        return friendDetails.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "friendRequestCell") as! FriendRequestCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "myFriendCell") as! FriendCell
+        
         let row = indexPath.row
         
-        let fbUserId = requestSenders[row].fbUserId
+        let fbUserId = friendDetails[row].fbUserId
         HelperFunctions().loadImageFromFacebook(imageView: cell.profileImage, facebookUserId: fbUserId, width: 200, height: 200)
-        cell.fullNameLabel.text = requestSenders[row].fullName
-        cell.usernameLabel.text = requestSenders[row].username
-        
-        if cell.friendRequestDelegate == nil {
-            cell.friendRequestDelegate = self
-        }
+        cell.nameLabel.text = friendDetails[row].fullName
+        cell.usernameLabel.text = friendDetails[row].username
         
         return cell
     }

@@ -26,15 +26,16 @@ var userSchema = new Schema({
     required: true
   },
   // optional
-  image_url: String,
   about_me: String,
   address: String,
 
-  friends: [{ type: Schema.ObjectId, ref: "User"}],
+  friends: [{type: Schema.ObjectId, ref: "User"}],
   wishes: [{ type: Schema.ObjectId, ref: "Wish"}],
 
-  //literally just "from user"
+  // From user
   friend_requests: [{ type: Schema.ObjectId, ref: "User"}],
+  // To user
+  sent_friend_requests: [{ type: Schema.ObjectId, ref: "User"}],
 
 	create_date: { type: Date, default: Date.now}
 });

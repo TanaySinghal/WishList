@@ -28,14 +28,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         FBSDKApplicationDelegate.sharedInstance().application(application, didFinishLaunchingWithOptions: launchOptions)
         
-        print("Hello from app delegate...")
+        //print("Hello from app delegate...")
         if let accessToken = FBSDKAccessToken.current(){
             print("Logged in 1: \(accessToken)")
         }
         else if let accessToken = FacebookCore.AccessToken.current {
             print("Logged in 2: \(accessToken)")
         }else{
-            print("Not logged In.")
+            //print("Not logged In.")
         }
         
         return true

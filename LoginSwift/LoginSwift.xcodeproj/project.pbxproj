@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		817C8B1C3ABB924AD68E3638 /* Pods_LoginSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F87C00397BBA3411BAB2AFA /* Pods_LoginSwift.framework */; };
+		8B2733561E0CA60B0012EC86 /* FriendCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2733551E0CA60B0012EC86 /* FriendCell.swift */; };
+		8B2733581E0CA6530012EC86 /* FriendsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2733571E0CA6530012EC86 /* FriendsViewController.swift */; };
+		8B27335A1E0CB0D60012EC86 /* SearchViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2733591E0CB0D60012EC86 /* SearchViewController.swift */; };
+		8B27335C1E0CB3020012EC86 /* SearchResultCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B27335B1E0CB3020012EC86 /* SearchResultCell.swift */; };
 		8B307FA81E0AC5F9009B046B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B307FA71E0AC5F9009B046B /* AppDelegate.swift */; };
 		8B307FAA1E0AC5F9009B046B /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B307FA91E0AC5F9009B046B /* ViewController.swift */; };
 		8B307FAD1E0AC5F9009B046B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8B307FAB1E0AC5F9009B046B /* Main.storyboard */; };
@@ -28,6 +32,10 @@
 		2FA1C432F55486871668183B /* Pods-LoginSwift.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoginSwift.release.xcconfig"; path = "Pods/Target Support Files/Pods-LoginSwift/Pods-LoginSwift.release.xcconfig"; sourceTree = "<group>"; };
 		36FA2A139A6F9FE73FC85CC9 /* Pods-LoginSwift.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-LoginSwift.debug.xcconfig"; path = "Pods/Target Support Files/Pods-LoginSwift/Pods-LoginSwift.debug.xcconfig"; sourceTree = "<group>"; };
 		6F87C00397BBA3411BAB2AFA /* Pods_LoginSwift.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_LoginSwift.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B2733551E0CA60B0012EC86 /* FriendCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendCell.swift; sourceTree = "<group>"; };
+		8B2733571E0CA6530012EC86 /* FriendsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsViewController.swift; sourceTree = "<group>"; };
+		8B2733591E0CB0D60012EC86 /* SearchViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
+		8B27335B1E0CB3020012EC86 /* SearchResultCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchResultCell.swift; sourceTree = "<group>"; };
 		8B307FA41E0AC5F9009B046B /* LoginSwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LoginSwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B307FA71E0AC5F9009B046B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8B307FA91E0AC5F9009B046B /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -95,9 +103,11 @@
 		8B50F8B21E0BB59000B895D1 /* TableCells */ = {
 			isa = PBXGroup;
 			children = (
+				8B27335B1E0CB3020012EC86 /* SearchResultCell.swift */,
 				8B50F8B01E0BB3EC00B895D1 /* FriendRequestCell.swift */,
 				8B50F8AE1E0B675000B895D1 /* NewWishCell.swift */,
 				8B50F8AC1E0B60E300B895D1 /* WishCell.swift */,
+				8B2733551E0CA60B0012EC86 /* FriendCell.swift */,
 			);
 			name = TableCells;
 			sourceTree = "<group>";
@@ -110,6 +120,8 @@
 				8B9141EB1E0B0F9500D93C0B /* SettingsViewController.swift */,
 				8B50F8A41E0B150D00B895D1 /* ProfileViewController.swift */,
 				8B50F8A81E0B20E600B895D1 /* OneMoreStepViewController.swift */,
+				8B2733571E0CA6530012EC86 /* FriendsViewController.swift */,
+				8B2733591E0CB0D60012EC86 /* SearchViewController.swift */,
 			);
 			name = ViewControllers;
 			sourceTree = "<group>";
@@ -256,11 +268,15 @@
 			files = (
 				8B307FAA1E0AC5F9009B046B /* ViewController.swift in Sources */,
 				8B307FA81E0AC5F9009B046B /* AppDelegate.swift in Sources */,
+				8B2733581E0CA6530012EC86 /* FriendsViewController.swift in Sources */,
 				8B50F8A51E0B150D00B895D1 /* ProfileViewController.swift in Sources */,
+				8B27335C1E0CB3020012EC86 /* SearchResultCell.swift in Sources */,
 				8B50F8A91E0B20E600B895D1 /* OneMoreStepViewController.swift in Sources */,
 				8B50F8AD1E0B60E300B895D1 /* WishCell.swift in Sources */,
 				8B50F8B11E0BB3EC00B895D1 /* FriendRequestCell.swift in Sources */,
 				8BA9741E1E0B042B00F34792 /* JSONParser.swift in Sources */,
+				8B27335A1E0CB0D60012EC86 /* SearchViewController.swift in Sources */,
+				8B2733561E0CA60B0012EC86 /* FriendCell.swift in Sources */,
 				8B9141EC1E0B0F9500D93C0B /* SettingsViewController.swift in Sources */,
 				8B50F8AF1E0B675000B895D1 /* NewWishCell.swift in Sources */,
 				8B50F8B51E0BB61300B895D1 /* FriendRequestsViewController.swift in Sources */,

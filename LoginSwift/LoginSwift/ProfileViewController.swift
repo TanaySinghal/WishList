@@ -9,6 +9,12 @@
 import UIKit
 import Alamofire
 
+class ProfileStates {
+    let myProfile = "myProfile"
+    let friendProfile = "friendProfile"
+    let strangerProfile = "strangerProfile"
+}
+
 class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, NewWishCellDelegate {
 
     
@@ -40,11 +46,12 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     var userId: String?
     
     //States: me, friend, stranger
-    var state: String = "me"
+    var profileState: String = ProfileStates().myProfile
+    
+    @IBOutlet weak var strangerView: UIView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
         // Do any additional setup after loading the view.
         
         // TODO: Change this button depending on my profile, friend profile, or stranger's profile
@@ -53,6 +60,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         
         // Get wishes of this user
+        // TODO: If not my profile, then get from server... store JSON
         userId = UserDefaults.standard.string(forKey: "user_id")
         
         // TODO: If state is stranger, change URL to find_public_wish_by_user (for security)
@@ -75,33 +83,44 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        // TODO: Remove index 1 of segment control if stranger, and show button instead
+        if profileState == ProfileStates().strangerProfile {
+            // Hide mailing address
+            mailingAddressLabel.isHidden = true
+            strangerView.isHidden = false
+            
+            // Hide private wish list button
+            if segmentedControl.numberOfSegments > 1 {
+                segmentedControl.removeSegment(at: 1, animated: false)
+            }
+        }
+        else {
+            mailingAddressLabel.isHidden = false
+            strangerView.isHidden = true
+        }
         
         // TODO: If my profile, get data from user defaults.
                 // Else, get data from server. Exclude address if stranger.
         // Get data from UserDefaults
-        let userSession = UserDefaults.standard
-        let fbUserId = userSession.string(forKey: "fb_user_id") ?? ""
-        let username = userSession.string(forKey: "username") ?? ""
-        let firstName = userSession.string(forKey: "first_name") ?? ""
-        let lastName = userSession.string(forKey: "last_name") ?? ""
-        let fullName = firstName + " " + lastName
-        let aboutMe = userSession.string(forKey: "about_me") ?? ""
-        let address = userSession.string(forKey: "address") ?? ""
+        if profileState == ProfileStates().myProfile {
+            let userSession = UserDefaults.standard
+            let fbUserId = userSession.string(forKey: "fb_user_id") ?? ""
+            let username = userSession.string(forKey: "username") ?? ""
+            let firstName = userSession.string(forKey: "first_name") ?? ""
+            let lastName = userSession.string(forKey: "last_name") ?? ""
+            let fullName = firstName + " " + lastName
+            let aboutMe = userSession.string(forKey: "about_me") ?? ""
+            let address = userSession.string(forKey: "address") ?? ""
+            
+            usernameBar.title = username
+            nameLabel.text = fullName
+            aboutMeLabel.text = aboutMe
+            // TODO: If not friends, hide mailing address, and show button
+            mailingAddressLabel.text = address
+            
+            HelperFunctions().loadImageFromFacebook(imageView: profileImage, facebookUserId: fbUserId, width: 360, height: 360)
+        }
         
-        usernameBar.title = username
-        nameLabel.text = fullName
-        aboutMeLabel.text = aboutMe
-        // TODO: If not friends, hide mailing address, and show button
-        mailingAddressLabel.text = address
-        
-        HelperFunctions().loadImageFromFacebook(imageView: profileImage, facebookUserId: fbUserId, width: 360)
-        
-        tableView.estimatedRowHeight = 124
-        tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.reloadData()
+        reloadTable()
     }
     
     override func didReceiveMemoryWarning() {
@@ -162,10 +181,8 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         }
         
         // Reload table to see change
-        DispatchQueue.main.async{
-            self.tableView.delegate = self
-            self.tableView.dataSource = self
-            self.tableView.reloadData()
+        DispatchQueue.main.async {
+            self.reloadTable()
         }
     }
 
@@ -200,6 +217,14 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     
     // MARK: - Table
+    func reloadTable() {
+        tableView.estimatedRowHeight = 124
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.reloadData()
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return getWishList().count
     }
