@@ -81,8 +81,8 @@ exports.find_by_id = function (req, res) {
 
 
 exports.update = function(req, res) {
-	var user = {
-		_id: {$eq: req.params.user_id}
+	var query = {
+		_id: {$eq: req.body.user_id}
 	};
 
 	// NOTE: Not allowed to change username once it has been set
@@ -101,7 +101,7 @@ exports.update = function(req, res) {
 	if (_about_me) updateTo.about_me = _about_me;
 	if (_address) updateTo.address = _address;
 
-	User.update(user, {$set: updateTo})
+	User.update(query, {$set: updateTo})
 	.exec(function (err, result) {
 		if(err) res.send("ERROR: \n" + err);
 
@@ -110,10 +110,12 @@ exports.update = function(req, res) {
 }
 
 /*{
-	"search_text": "fb2"
+	"searcher_id": "...",
+	"search_text": "Tanay"
 }*/
 exports.search = function (req, res) {
 
+	var searcher_id = req.body.searcher_id;
 	var search_text = req.body.search_text;
 
 	var query = {
@@ -124,16 +126,68 @@ exports.search = function (req, res) {
 		 ]
 	 };
 
-	User.find(query, function (err, user) {
+	User.find(query)
+	.lean() // Return a native JavaScript JSON object
+	.limit(20) // Limit to 20 search results
+	.exec(function (err, users) {
 			if(err) {
 				res.send("ERROR: \n" + err);
 				return;
 			}
 
-			res.json(user);
-			// sort in ascending order by username
-	}).limit(20).sort({username: 1});
+			var usersJSON = users;
+
+			// Add profile state to usersJson
+			for(var i = 0; i < usersJSON.length; i++) {
+				// Get profile state
+				var profileState = hf.getProfileState(usersJSON[i], searcher_id);
+
+				usersJSON[i].profile_state = profileState;
+
+				if (profileState == "strangerProfile") {
+					// Get stranger state
+					var friend_requests = usersJSON[i].friend_requests;
+					var sent_friend_requests = usersJSON[i].sent_friend_requests;
+					var strangerState = hf.getStrangerState(friend_requests, sent_friend_requests, searcher_id);
+					usersJSON[i].stranger_state = strangerState;
+				}
+
+			}
+
+			res.json(usersJSON);
+	});
 }
+
+
+
+/*{
+	"my_user_id": "585b0836c7f7f351060e33ba",
+	"friend_id": "585ca1fdb9fe64d1a65992cd"
+}*/
+/*exports.get_stranger_state = function (req, res) {
+
+		var my_user_id = req.body.my_user_id;
+		var stranger_id = req.body.friend_id;
+
+		User.findOne({_id: stranger_id})
+		.lean() // Return a native JavaScript JSON object
+		.exec(function (err, stranger) {
+				if(err) {
+					res.send("ERROR: \n" + err);
+					return;
+				}
+
+				var json_to_return = {}
+
+				var friend_requests = stranger.friend_requests;
+				var sent_friend_requests = friend.sent_friend_requests;
+
+				json_to_return.stranger_state = hf.getStrangerState(friend_requests, sent_friend_requests, my_user_id);
+
+				res.json(json_to_return);
+
+		});
+}*/
 
 // MARK - Friends
 // GET friends
@@ -200,29 +254,29 @@ exports.remove_friend = function (req, res) {
 // MARK - Friend Requests
 // Sample json:
 /*{
-  "from_user_id": "....",
-  "to_user_id": "...."
+  "sender_id": "....",
+  "user_id": "...."
 }*/
 exports.send_friend_request = function(req, res) {
-		var from_user_id = req.body.from_user_id;
-		var to_user_id = req.body.to_user_id;
+		var sender_id = req.body.sender_id;
+		var user_id = req.body.user_id;
 
 		var query1 = {
-			_id: from_user_id,
+			_id: sender_id,
 			// Make sure we're not already friends
-			friends: {$ne: to_user_id},
+			friends: {$ne: user_id},
 			// Make sure I haven't received a request already
-			friend_requests: {$ne: to_user_id},
+			friend_requests: {$ne: user_id},
 			// Make sure I haven't sent a request already
-			sent_friend_requests: {$ne: to_user_id}
+			sent_friend_requests: {$ne: user_id}
 		}
 
 		var update1 = {
 			// Add that I sent them a friend request
-			$addToSet: { sent_friend_requests: to_user_id }
+			$addToSet: { sent_friend_requests: user_id }
 		}
 
-		User.update(query1, update1, function (err, to_user) {
+		User.update(query1, update1, function (err, sender) {
 
 			if(err) {
 				res.send("ERROR: \n" + err);
@@ -230,26 +284,27 @@ exports.send_friend_request = function(req, res) {
 			}
 
 			var query2 = {
-				_id: to_user_id,
+				_id: user_id,
 				// Make sure we're not already friends
-				friends: {$ne: from_user_id},
+				friends: {$ne: sender_id},
 				// Make sure they haven't received a request from me already
-				friend_requests: {$ne: from_user_id},
+				friend_requests: {$ne: sender_id},
 				// Make sure they haven't sent a request to me already
-				sent_friend_requests: {$ne: from_user_id}
+				sent_friend_requests: {$ne: sender_id}
 			}
 			var update2 = {
 				// Send them a friend request
-		    $addToSet: { friend_requests: from_user_id }
+		    $addToSet: { friend_requests: sender_id }
 			}
 
-			User.update(query2, update2, function(err, to_user) {
+			User.update(query2, update2, function(err, user) {
 					if(err) {
 						res.send("ERROR: \n" + err);
 						return;
 					}
 
-					res.json(to_user);
+					// Return user who we sent the friend request to
+					res.json(user);
 			});
 		});
 }

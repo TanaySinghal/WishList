@@ -25,7 +25,9 @@
 		8B50F8B11E0BB3EC00B895D1 /* FriendRequestCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B50F8B01E0BB3EC00B895D1 /* FriendRequestCell.swift */; };
 		8B50F8B51E0BB61300B895D1 /* FriendRequestsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B50F8B41E0BB61300B895D1 /* FriendRequestsViewController.swift */; };
 		8B9141EC1E0B0F9500D93C0B /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9141EB1E0B0F9500D93C0B /* SettingsViewController.swift */; };
+		8B9B80131E107CF100850B3D /* GlobalVariables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9B80121E107CF100850B3D /* GlobalVariables.swift */; };
 		8BA9741E1E0B042B00F34792 /* JSONParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BA9741D1E0B042B00F34792 /* JSONParser.swift */; };
+		8BC805281E1248560062135C /* WishDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC805271E1248560062135C /* WishDetailViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,7 +53,9 @@
 		8B50F8B01E0BB3EC00B895D1 /* FriendRequestCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestCell.swift; sourceTree = "<group>"; };
 		8B50F8B41E0BB61300B895D1 /* FriendRequestsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendRequestsViewController.swift; sourceTree = "<group>"; };
 		8B9141EB1E0B0F9500D93C0B /* SettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
+		8B9B80121E107CF100850B3D /* GlobalVariables.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlobalVariables.swift; sourceTree = "<group>"; };
 		8BA9741D1E0B042B00F34792 /* JSONParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONParser.swift; sourceTree = "<group>"; };
+		8BC805271E1248560062135C /* WishDetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WishDetailViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,12 +120,14 @@
 			isa = PBXGroup;
 			children = (
 				8B50F8B41E0BB61300B895D1 /* FriendRequestsViewController.swift */,
+				8B9B80121E107CF100850B3D /* GlobalVariables.swift */,
 				8B307FA91E0AC5F9009B046B /* ViewController.swift */,
 				8B9141EB1E0B0F9500D93C0B /* SettingsViewController.swift */,
 				8B50F8A41E0B150D00B895D1 /* ProfileViewController.swift */,
 				8B50F8A81E0B20E600B895D1 /* OneMoreStepViewController.swift */,
 				8B2733571E0CA6530012EC86 /* FriendsViewController.swift */,
 				8B2733591E0CB0D60012EC86 /* SearchViewController.swift */,
+				8BC805271E1248560062135C /* WishDetailViewController.swift */,
 			);
 			name = ViewControllers;
 			sourceTree = "<group>";
@@ -276,11 +282,13 @@
 				8B50F8B11E0BB3EC00B895D1 /* FriendRequestCell.swift in Sources */,
 				8BA9741E1E0B042B00F34792 /* JSONParser.swift in Sources */,
 				8B27335A1E0CB0D60012EC86 /* SearchViewController.swift in Sources */,
+				8B9B80131E107CF100850B3D /* GlobalVariables.swift in Sources */,
 				8B2733561E0CA60B0012EC86 /* FriendCell.swift in Sources */,
 				8B9141EC1E0B0F9500D93C0B /* SettingsViewController.swift in Sources */,
 				8B50F8AF1E0B675000B895D1 /* NewWishCell.swift in Sources */,
 				8B50F8B51E0BB61300B895D1 /* FriendRequestsViewController.swift in Sources */,
 				8B50F8A71E0B1DB800B895D1 /* HelperFunctions.swift in Sources */,
+				8BC805281E1248560062135C /* WishDetailViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

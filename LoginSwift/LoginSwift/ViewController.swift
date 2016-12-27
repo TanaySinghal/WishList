@@ -15,31 +15,28 @@ import Alamofire
 
 // Check this out for graph: https://github.com/jestapinski/FinalBlockTrader442/blob/c23d17d0ea268b2f8cc727fe300b907558ed064b/BlockTrader/MainPageViewController.swift
 
-// Alamofire tutorial: http://www.appcoda.com/alamofire-beginner-guide/
-// Alamofire github: https://github.com/Alamofire/Alamofire/blob/master/Documentation/Alamofire%204.0%20Migration%20Guide.md
 
 class ViewController: UIViewController, LoginButtonDelegate {
 
+    var myProfileDetail: ProfileDetail?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        
-        print("Hello from VC")
         if let accessToken = FacebookCore.AccessToken.current {
             // User is logged in, use 'accessToken' here.
             print("Already logged in??!!")
             print("User id is \(accessToken.userId)")
         }
         else {
-            //print("VC: Not logged in already...")
             let loginButton = LoginButton(readPermissions: [ .publicProfile, .email, .userFriends])
+            
             loginButton.center = view.center
             loginButton.delegate = self
             view.addSubview(loginButton)
         }
     }
-
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -53,9 +50,12 @@ class ViewController: UIViewController, LoginButtonDelegate {
         case .cancelled:
             print("Facebook login cancelled")
         case .failed(let error):
-            print("Facebook login failed (\(error))")
+            print("Facebook login failed: (\(error.localizedDescription))")
         case .success(_, _, let accessToken):
             print("Facebook login succeeded! My user ID is: \(accessToken.userId!)")
+            
+            // Hide log out button
+            loginButton.isHidden = true
             
             // Send graph request
             let connection = GraphRequestConnection()
@@ -85,60 +85,64 @@ class ViewController: UIViewController, LoginButtonDelegate {
                         "email": email,
                     ]
                     
-                    Alamofire.request("http://localhost:8080/user/authorize_from_fb", method: .post, parameters: parameters, encoding: JSONEncoding.default).responseJSON { response in
+                    let urlPath = PostRoutes().authorizeFromFb
+                    
+                    HelperFunctions().sendPostRequest(urlPath: urlPath, parameters: parameters) {
+                        JSON, errorDescription in
                         
-                        switch response.result {
-                        case .success(let value):
+                        if let json = JSON {
                             
-                            if let JSON = response.result.value {
-                                //print("User JSON:\n \(JSON)")
-                                
-                                
-                                // Parse JSON so we get some values...
-                                // We already have all the other values...
-                                let parser = JSONParser()
-                                let user_id = parser.parseJsonAsString(json: JSON as AnyObject, field: "_id")
-                                let username = parser.parseJsonAsString(json: JSON as AnyObject, field: "username")
-                                
-                                // Save this data locally
-                                let userSession = UserDefaults.standard
-                                userSession.set(user_id, forKey: "user_id")
-                                userSession.set(fb_user_id, forKey: "fb_user_id")
-                                userSession.set(first_name, forKey: "first_name")
-                                userSession.set(last_name, forKey: "last_name")
-                                userSession.set(email, forKey: "email")
-                                userSession.set(username, forKey: "username")
-                                
-                                // How to retrieve
-                                //print("Username: \(userSession.string(forKey: "username")!)")
-                                
-                                if username!.characters.count > 16 {
-                                    //Go to one more step
-                                    
-                                    let about_me = parser.parseJsonAsString(json: JSON as AnyObject, field: "about_me")
-                                    let address = parser.parseJsonAsString(json: JSON as AnyObject, field: "address")
-                                    userSession.set(about_me, forKey: "about_me")
-                                    userSession.set(address, forKey: "address")
-                                    
-                                    self.performSegue(withIdentifier: "oneMoreStep", sender: self)
-                                }
-                                else {
-                                    // Go directly to profile
-                                    self.performSegue(withIdentifier: "loginSegue", sender: self)
-                                }
-                                
+                            // Parse JSON
+                            let parser = JSONParser()
+                            
+                            // Get information from database (not from FB)
+                            let user_id = parser.parseJsonAsString(json: json as AnyObject, field: "_id")
+                            let username = parser.parseJsonAsString(json: json as AnyObject, field: "username")
+                            let about_me = parser.parseJsonAsString(json: json as AnyObject, field: "about_me")
+                            let address = parser.parseJsonAsString(json: json as AnyObject, field: "address")
+                            
+                            
+                            self.myProfileDetail = ProfileDetail(
+                                id: user_id!,
+                                fbUserId: fb_user_id,
+                                fullName: first_name + " " + last_name,
+                                username: username!,
+                                aboutMe: about_me,
+                                address: address,
+                                profileState: ProfileStates().myProfile,
+                                strangerState: nil,
+                                image: nil
+                            )
+                            
+                            // Save ID locally
+                            UserDefaults.standard.set(user_id, forKey: "user_id")
+                            
+                            if username!.characters.count > 16 {
+                                //Go to one more step
+                                self.performSegue(withIdentifier: "oneMoreStep", sender: self)
                             }
-                                
                             else {
-                                print("ERROR occured in VC while posting. Perhaps a problem with serializing JSON. Here is the response we got: \(value)")
+                                // Go directly to profile
+                                self.performSegue(withIdentifier: "loginSegue", sender: self)
                             }
                             
-                        // Handle failure
-                        case .failure(let error):
-                            print("Post request from VC failed: \(error)")
+                        }
+                        else if let error = errorDescription {
+                            print("ERROR: \(error)")
+                            
+                            // Display alert message
+                            HelperFunctions().displayAlertMessage(title: "Login failed", message: "We could not connect to our servers. Please check your internet connection. Otherwise, maybe our servers are down. Sorry!", viewController: self)
+                            
+                            // Log me out
+                            let loginManager = LoginManager()
+                            loginManager.logOut()
+                            
+                            loginButton.isHidden = false
+                        }
+                        else {
+                            print("No error but no JSON either")
                         }
                     }
-                    
                     
                 case .failed(let error):
                     print("Graph Request Failed: \(error)")
@@ -146,13 +150,34 @@ class ViewController: UIViewController, LoginButtonDelegate {
             }
             connection.start()
             
-
-            
         }
     }
     
     // A different screen is used for logout
     func loginButtonDidLogOut(_ loginButton: LoginButton) {}
+    
+    
+    // MARK: - Navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        if segue.identifier == "loginSegue" {
+            
+            let tabBarController = segue.destination as! UITabBarController
+            let destNavController = tabBarController.viewControllers?.last as! UINavigationController
+            
+            let profileVC = destNavController.topViewController as! ProfileViewController
+            
+            profileVC.profileDetail = myProfileDetail
+            
+        }
+        
+        if segue.identifier == "oneMoreStep" {
+            
+            let viewController = segue.destination as! OneMoreStepViewController
+            viewController.profileDetail = myProfileDetail
+        }
+        
+    }
     
 }
 

@@ -10,7 +10,7 @@ import UIKit
 
 
 protocol FriendRequestCellDelegate {
-    func modifyFriendRequest(action: String, cell: FriendRequestCell)
+    func modifyFriendRequest(urlPath: String, cell: FriendRequestCell)
 }
 
 // accept or remove
@@ -32,14 +32,14 @@ class FriendRequestCell: UITableViewCell {
 
     @IBAction func acceptRequest(_ sender: Any) {
         if let delegate = friendRequestDelegate {
-            delegate.modifyFriendRequest(action: "accept", cell: self)
+            delegate.modifyFriendRequest(urlPath: PostRoutes().acceptFriendRequest, cell: self)
         }
     }
     
     
     @IBAction func removeRequest(_ sender: Any) {
         if let delegate = friendRequestDelegate {
-            delegate.modifyFriendRequest(action: "remove", cell: self)
+            delegate.modifyFriendRequest(urlPath: PostRoutes().removeFriendRequest, cell: self)
         }
     }
     

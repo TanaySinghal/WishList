@@ -8,6 +8,7 @@
 
 import UIKit
 import Alamofire
+import Foundation
 
 class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -15,39 +16,30 @@ class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewD
     
     @IBOutlet weak var navBar: UINavigationItem!
     
-    struct FriendDetail {
-        var id: String
-        var fbUserId: String
-        var fullName: String
-        var username: String
-    }
     
-    var friendDetails = [FriendDetail]()
+    var friendDetails = [ProfileDetail]()
+    var searchedFriendDetails = [ProfileDetail]()
     
-    var userId: String?
+    let searchController = UISearchController(searchResultsController: nil)
+    
+    var firstTimeLoad = true
+    
+    let refreshControl = UIRefreshControl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+    
+        // Set up search controller
+        searchController.searchResultsUpdater = self
+        definesPresentationContext = true
+        searchController.dimsBackgroundDuringPresentation = false
+        tableView.tableHeaderView = searchController.searchBar
         
-        // Do any additional setup after loading the view.
-        userId = UserDefaults.standard.string(forKey: "user_id")
+        //Add refresh control
+        refreshControl.addTarget(self, action: #selector(refreshFromPull), for: .valueChanged)
         
-        // Send GET request to find friend requests
-        Alamofire.request("http://localhost:8080/user/list_friends/" + userId!).responseJSON { response in
-            // New code
-            switch response.result {
-            case .success(let value):
-                if let JSON = response.result.value {
-                    self.refreshTableWithJson(JSON: JSON)
-                }
-                else {
-                    print("Failed to serialize JSON in FriendsVC. Here is the result: \(value)")
-                }
-                
-            case .failure(let error):
-                print("Get request from FriendsVC failed: \(error)")
-            }
-        }
+        // Get friends from server
+        getFriends()
     }
 
     override func didReceiveMemoryWarning() {
@@ -55,17 +47,68 @@ class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewD
         // Dispose of any resources that can be recreated.
     }
     
-
-    override func viewDidAppear(_ animated: Bool) {
-        //reloadTable()
+    // Get updated friends list whenever view appears
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Add refresh controller
+        self.tableView.addSubview(refreshControl)
+        
+        if firstTimeLoad {
+            firstTimeLoad = false
+            // In case getFriends() didn't reload table
+            reloadTable()
+        }
+        else {
+            getFriends()
+        }
     }
     
+    func refreshFromPull() {
+        getFriends()
+        
+        /*
+         Put this when you're done getting whatever you wanted.
+         
+         if self.refreshControl.isRefreshing {
+            self.refreshControl.endRefreshing()
+         }
+
+         */
+    }
     
+    func getFriends() {
+        
+        let userId = UserDefaults.standard.string(forKey: "user_id")
+        
+        // Send GET request to get friends
+        let urlPath = GetRoutes().listFriends + userId!
+        
+        HelperFunctions().sendGetRequest(urlPath: urlPath) {
+            JSON, errorDescription in
+            
+            // Stop refreshing
+            if self.refreshControl.isRefreshing {
+                self.refreshControl.endRefreshing()
+            }
+            
+            if let json = JSON {
+                self.refreshTableWithJson(JSON: json)
+                
+            }
+            
+            if let error = errorDescription {
+                
+                // Display alert message
+                HelperFunctions().displayAlertMessage(title: "Something went wrong", message: error, viewController: self)
+            }
+        }
+    }
     
     func refreshTableWithJson(JSON: Any) {
         
         // Reset friendDetails
-        friendDetails = [FriendDetail]()
+        friendDetails = [ProfileDetail]()
         
         // Go through array
         if let jsonArray = JSON as? NSMutableArray {
@@ -81,13 +124,20 @@ class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewD
                 let lastName = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "last_name")
                 let fullName = firstName! + " " + lastName!
                 let username = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "username")
+                let aboutMe = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "about_me")
+                let address = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "address")
                 
                 // Create new WishDetail
-                let newFriendDetail = FriendDetail(
+                let newFriendDetail = ProfileDetail(
                     id: id!,
                     fbUserId: fbUserId!,
                     fullName: fullName,
-                    username: username!
+                    username: username!,
+                    aboutMe: aboutMe,
+                    address: address,
+                    profileState: ProfileStates().friendProfile,
+                    strangerState: nil,
+                    image: nil
                 )
                 
                 friendDetails.append(newFriendDetail)
@@ -109,16 +159,49 @@ class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewD
         }
     }
     
+    // MARK: - Search
+    func filterContentForSearchText(searchText: String, scope: String = "All") {
+        
+        // Filter friend details
+        let search = searchText.lowercased()
+        
+        searchedFriendDetails = friendDetails.filter{
+            $0.username.lowercased().contains(search) ||
+            $0.fullName.lowercased().contains(search) ||
+            search == ""
+        }
+        
+        // Reload table
+        reloadTable()
+        
+    }
+    
+    func isSearching() -> Bool {
+        return searchController.isActive && searchController.searchBar.text != ""
+    }
+    
+    func getFriendDetails() -> [ProfileDetail] {
+        if isSearching() {
+            return searchedFriendDetails
+        }
+        return friendDetails
+    }
     
     // MARK: - Table
     func reloadTable() {
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.reloadData()
+        // Ensure that table has been loaded
+        if let table = tableView {
+            table.estimatedRowHeight = 70
+            table.rowHeight = UITableViewAutomaticDimension
+            
+            table.delegate = self
+            table.dataSource = self
+            table.reloadData()
+        }
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return friendDetails.count
+        return getFriendDetails().count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -127,30 +210,44 @@ class FriendsViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         let row = indexPath.row
         
-        let fbUserId = friendDetails[row].fbUserId
+        let friendDetail = getFriendDetails()[row]
+        
+        let fbUserId = friendDetail.fbUserId
         HelperFunctions().loadImageFromFacebookWithCompletion(facebookUserId: fbUserId, width: 200, height: 200) { image in
             cell.profileImage.image = image
         }
         
-        cell.nameLabel.text = friendDetails[row].fullName
-        cell.usernameLabel.text = friendDetails[row].username
+        cell.nameLabel.text = friendDetail.fullName
+        cell.usernameLabel.text = friendDetail.username
         
         return cell
     }
     
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+    deinit {
+        //remove search controller
+        searchController.view!.removeFromSuperview()
     }
     
-    /*
     // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+        
+        if segue.identifier == "friendToProfile" {
+            if let indexPath = tableView.indexPathForSelectedRow {
+                
+                let profileVC = segue.destination as! ProfileViewController
+                profileVC.profileDetail = getFriendDetails()[indexPath.row]
+            }
+        }
     }
-    */
+    
 
+}
+
+
+
+extension FriendsViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        filterContentForSearchText(searchText: searchController.searchBar.text!)
+    }
 }

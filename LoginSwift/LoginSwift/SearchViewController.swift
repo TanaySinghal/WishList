@@ -12,25 +12,18 @@ import Alamofire
 
 class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
-    // Check this out: https://www.raywenderlich.com/113772/uisearchcontroller-tutorial
     
-    struct SearchResult {
-        var id: String
-        var fbUserId: String
-        var fullName: String
-        var username: String
-        var image: UIImage?
-    }
+    var searchResults = [ProfileDetail]()
     
-    var searchResults = [SearchResult]()
+    var userId: String?
     
     struct Cache {
         var username: String
         var image: UIImage?
     }
-    
     var caches = [Cache]()
     let maxCacheSize = 20
+    
     
     @IBOutlet weak var tableView: UITableView!
     
@@ -40,23 +33,27 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        userId = UserDefaults.standard.string(forKey: "user_id")
         
         // Set up search controller
         searchController.searchResultsUpdater = self
         definesPresentationContext = true
         searchController.dimsBackgroundDuringPresentation = false
         
-        tableView.tableHeaderView = searchController.searchBar
+        // Get initial 20 searches
+        sendSearchRequest(searcherId: userId!, searchText: "")
+        
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        // Define some random stuff
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.reloadData()
+        tableView.tableHeaderView = searchController.searchBar
+        
+        // Reload table in case sending the request couldn't
+        reloadTable()
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -69,37 +66,39 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         DispatchQueue.global().async {
             
             // Send POST request to find search results
-            let parameters: Parameters = [
-                "search_text": searchText
-            ]
-            
-            Alamofire.request("http://localhost:8080/user/search", method: .post, parameters: parameters, encoding: JSONEncoding.default).responseJSON { response in
-                // New code
-                switch response.result {
-                case .success(let value):
-                    if let JSON = response.result.value {
-                        self.refreshTableWithJson(JSON: JSON)
-                    }
-                    else {
-                        print("Failed to serialize JSON in SearchVC. Here is the result: \(value)")
-                    }
-                    
-                case .failure(let error):
-                    print("Get request from SearchVC failed: \(error)")
-                }
-            }
-            
+            self.sendSearchRequest(searcherId: self.userId!, searchText: searchText)
         }
         
     }
     
+    func sendSearchRequest(searcherId: String, searchText: String) {
+        
+        let parameters: Parameters = [
+            "searcher_id": searcherId,
+            "search_text": searchText
+        ]
+        
+        let urlPath = "/user/search"
+        
+        HelperFunctions().sendPostRequest(urlPath: urlPath, parameters: parameters) {
+            JSON, errorDescription in
+            
+            if let json = JSON {
+                self.refreshTableWithJson(JSON: json)
+            }
+            if let error = errorDescription {
+                
+                // Display alert message
+                HelperFunctions().displayAlertMessage(title: "Something went wrong", message: error, viewController: self)
+            }
+        }
+    }
     
-    // MARK:
     func refreshTableWithJson(JSON: Any) {
         
         
         // Reset friendDetails
-        searchResults = [SearchResult]()
+        searchResults = [ProfileDetail]()
         
         // Go through array
         if let jsonArray = JSON as? NSMutableArray {
@@ -109,22 +108,32 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
             for jsonObject in jsonArray {
                 
                 // Extract information
-                let id = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "_id")
-                let fbUserId = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "fb_user_id")
-                let firstName = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "first_name")
-                let lastName = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "last_name")
-                let fullName = firstName! + " " + lastName!
-                let username = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "username")
+                let json = jsonObject as AnyObject
                 
-                // Create new WishDetail
-                let newSearchResults = SearchResult(
+                let id = parser.parseJsonAsString(json: json, field: "_id")
+                let fbUserId = parser.parseJsonAsString(json: json, field: "fb_user_id")
+                let firstName = parser.parseJsonAsString(json: json, field: "first_name")
+                let lastName = parser.parseJsonAsString(json: json, field: "last_name")
+                let fullName = firstName! + " " + lastName!
+                let username = parser.parseJsonAsString(json: json, field: "username")
+                let profileState = parser.parseJsonAsString(json: json, field: "profile_state")
+                let strangerState = parser.parseJsonAsString(json: json, field: "stranger_state")
+                let aboutMe = parser.parseJsonAsString(json: json, field: "about_me")
+                let address = parser.parseJsonAsString(json: json, field: "address")
+                
+                
+                // Create new search result
+                let newSearchResults = ProfileDetail(
                     id: id!,
                     fbUserId: fbUserId!,
                     fullName: fullName,
                     username: username!,
+                    aboutMe: aboutMe,
+                    address: address,
+                    profileState: profileState!,
+                    strangerState: strangerState,
                     image: nil
                 )
-
                 
                 searchResults.append(newSearchResults)
             }
@@ -182,9 +191,11 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     // MARK: - Table View
     func reloadTable() {
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.reloadData()
+        if let table = tableView {
+            table.delegate = self
+            table.dataSource = self
+            table.reloadData()
+        }
     }
     
     
@@ -223,26 +234,25 @@ class SearchViewController: UIViewController, UITableViewDelegate, UITableViewDa
         return cell
     }
     
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-    }
-
-    
     deinit {
         //remove search controller
         searchController.view!.removeFromSuperview()
     }
     
-    /*
+    
     // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+        
+        if segue.identifier == "searchResultToProfile" {
+            if let indexPath = tableView.indexPathForSelectedRow {
+                
+                let profileVC = segue.destination as! ProfileViewController
+                profileVC.profileDetail = searchResults[indexPath.row]
+                
+            }
+        }
+        
     }
-    */
     
 }
 

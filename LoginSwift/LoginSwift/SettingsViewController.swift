@@ -18,7 +18,6 @@ class SettingsViewController: UIViewController, LoginButtonDelegate {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        print("Hello from Settings VC")
         if let accessToken = FacebookCore.AccessToken.current {
             // User is logged in, use 'accessToken' here.
             print("Settings VC: User is logged in.")
@@ -42,13 +41,15 @@ class SettingsViewController: UIViewController, LoginButtonDelegate {
     }
     
     
-    // Login is handled elsewhere
-    func loginButtonDidCompleteLogin(_ loginButton: LoginButton, result: LoginResult) {
-    }
+    // Login is handled in ViewController
+    func loginButtonDidCompleteLogin(_ loginButton: LoginButton, result: LoginResult) {}
     
     // A different screen is used for logout
     func loginButtonDidLogOut(_ loginButton: LoginButton) {
         print("Log out button pressed")
+        
+        // Remove log in button
+        loginButton.isHidden = true
         
         //Do segue "logOutSegue"
         self.performSegue(withIdentifier: "logoutSegue", sender: self)

@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Alamofire
 
 class HelperFunctions {
     
@@ -27,39 +28,44 @@ class HelperFunctions {
     }
     
     
-    // Changes the imageView to the image in the URL
-    // Usage example: 
-    // HelperFunctions().loadImageFromUrl(imageView, imageUrl)
-    /*func loadImageFromUrl(imageView: UIImageView, imageUrl: String) {
+    // This shows message and dismisses on "OK"
+    func displayAlertMessage(title:String, message:String, viewController:AnyObject) {
+        let myAlert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert);
         
-        // Create Url from string
-        let url = NSURL(string: imageUrl)!
+        let okAction = UIAlertAction(title:"OK", style:UIAlertActionStyle.default, handler:nil);
         
-        // Download task:
-        let task = URLSession.shared.dataTask(with: url as URL) { (responseData, responseUrl, error) -> Void in
+        myAlert.addAction(okAction);
+        viewController.present(myAlert, animated: true, completion:nil);
+    }
+    
+    
+    //This allows any action on OK or Cancel
+    func displayConfirmMessage(title:String, message: String, viewController:AnyObject, continueAction:Void, cancelAction:Void) {
+        let myAlert = UIAlertController(title: title, message: message, preferredStyle:UIAlertControllerStyle.alert);
+        
+        
+        let continueButton = UIAlertAction(title: "Continue", style: .default) {
+            //Move to next page
+            action in
             
-            if error != nil {
-                print("ERROR getting image \(error!.localizedDescription)")
-                return
-            }
-            
-            // if responseData is not null...
-            if let data = responseData{
-                
-                // execute in UI thread
-                DispatchQueue.main.async {
-                    imageView.image = UIImage(data: data)
-                }
-            }
+            continueAction;
         }
         
-        // Run task
-        task.resume()
         
-    }*/
+        let cancelButton = UIAlertAction(title: "Cancel", style: .default) {
+            //Move to next page
+            action in
+            
+            cancelAction;
+        }
+        
+        myAlert.addAction(continueButton);
+        myAlert.addAction(cancelButton);
+        viewController.present(myAlert, animated: true, completion: nil);
+    }
     
     
-    
+    // MARK - Networking
     func loadImageFromUrlWithCompletion(imageUrl: String, completionHandler: @escaping (UIImage?) -> ()) {
         
         // Create Url from string
@@ -105,24 +111,53 @@ class HelperFunctions {
                 // Do something
             completionHandler(image)
         }
-        // Download task:
-        /*let task = URLSession.shared.dataTask(with: url as URL) { (responseData, responseUrl, error) -> Void in
-            
-            if error != nil {
-                print("ERROR getting image \(error!.localizedDescription)")
-                completionHandler(nil)
-            }
-            
-            if let data = responseData {
-                
-                DispatchQueue.main.async {
-                    completionHandler(UIImage(data: data))
-                }
-            }
-        }
-        
-        // Run task
-        task.resume()*/
     }
     
+    
+    // Example urlPath: "/wish/remove_friend_request"
+    func sendGetRequest(urlPath: String, completionHandler:@escaping (Any?, String?) -> Void) {
+        
+        // Send post request to accept friend request.
+        Alamofire.request(hostUrl + urlPath).responseJSON { response in
+            
+            switch response.result {
+            case .success(let value):
+                if let JSON = response.result.value {
+                    // Send completion handler
+                    completionHandler(JSON, nil)
+                }
+                else {
+                    print("Failed to serialize JSON. Here is the result: \(value)")
+                    completionHandler(nil, nil)
+                }
+                
+            case .failure(let error):
+                completionHandler(nil, error.localizedDescription)
+            }
+        }
+    }
+    
+    // Example urlPath: "/wish/remove_friend_request"
+    func sendPostRequest(urlPath: String, parameters: Parameters, completionHandler:@escaping (Any?, String?) -> Void) {
+        
+        // Send post request to accept friend request.
+        Alamofire.request(hostUrl + urlPath, method: .post, parameters: parameters, encoding: JSONEncoding.default).responseJSON { response in
+            
+            switch response.result {
+            case .success(let value):
+                if let JSON = response.result.value {
+                    // Send completion handler
+                    completionHandler(JSON, nil)
+                }
+                else {
+                    print("Failed to serialize JSON. Here is the result: \(value)")
+                    completionHandler(nil, nil)
+                }
+                
+            case .failure(let error):
+                completionHandler(nil, error.localizedDescription)
+            }
+        }
+    }
+
 }

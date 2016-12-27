@@ -19,10 +19,17 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
     let maxTextFieldLength = 16
     let maxTextViewLength = 150
     
+    var profileDetail: ProfileDetail?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
         // Make text views look like text fields
         aboutMeField.layer.borderColor = UIColor(red: 215.0/255.0, green: 215.0/255.0, blue: 215.0/255.0, alpha: 1).cgColor
@@ -34,10 +41,7 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
         mailingAddressField.layer.borderWidth = 0.6;
         mailingAddressField.layer.cornerRadius = 6.0;
         
-        // TODO: Limit letter count as user types
-        // 16 char for username
-        // 150 char for about me
-        // 150 char for mailing address
+        
         usernameField.delegate = self
         aboutMeField.delegate = self
         mailingAddressField.delegate = self
@@ -49,6 +53,7 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
     }
     
     
+    // Truncates text views as user types
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         // Truncate string
         let currentText = textField.text ?? ""
@@ -63,8 +68,6 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         let currentText = textView.text ?? ""
         
-        
-        
         guard let stringRange = range.range(for: currentText) else { return false }
         
         let changedText = currentText.replacingCharacters(in: stringRange, with: text)
@@ -72,7 +75,7 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
         return changedText.characters.count <= maxTextViewLength
     }
 
-    
+    // MARK: - Button Pressed
     @IBAction func finishRegistration(_ sender: Any) {
         
         // Check if username is empty
@@ -103,60 +106,69 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
         // If address and about me are empty, make them ""
         
         
-        // Send post request
+        let userId = UserDefaults.standard.string(forKey: "user_id")
+        
+        // Send post request to complete registration
         let parameters: Parameters = [
+            "user_id": userId!,
             "username": username,
             "about_me": about_me,
             "address": address
         ]
         
-        let userSession = UserDefaults.standard
-        let userId = userSession.string(forKey: "user_id") ?? ""
+        let urlPath = PostRoutes().updateUser
         
-        // Send post request to database
-        Alamofire.request("http://localhost:8080/user/update/" + userId, method: .post, parameters: parameters, encoding: JSONEncoding.default).responseJSON { response in
+        HelperFunctions().sendPostRequest(urlPath: urlPath, parameters: parameters) {
+            JSON, errorDescription in
             
-            // New code
-            
-            switch response.result {
-            case .success(let value):
+            if let json = JSON {
+                print("User JSON:\n \(json)")
                 
-                if let JSON = response.result.value {
-                    print("User JSON:\n \(JSON)")
+                
+                if let oldProfileDetail = self.profileDetail {
                     
-                    // Save this data locally
-                    userSession.set(username, forKey: "username")
-                    userSession.set(about_me, forKey: "about_me")
-                    userSession.set(address, forKey: "address")
+                    self.profileDetail = ProfileDetail(
+                        id: userId!,
+                        fbUserId: oldProfileDetail.fbUserId,
+                        fullName: oldProfileDetail.fullName,
+                        username: username,
+                        aboutMe: about_me,
+                        address: address,
+                        profileState: oldProfileDetail.profileState,
+                        strangerState: nil,
+                        image: nil
+                    )
                     
                     // Segue on
                     self.performSegue(withIdentifier: "finishedSignUp", sender: self)
                 }
-                else {
-                    print("Failed to serialize JSON in OneMoreStepVC. Here is the result: \(value)")
-                }
-                
-            case .failure(let error):
-                print("Post request from OneMoreStepVC failed: \(error)")
             }
-            // End new code
+            else if let error = errorDescription {
+                // Display alert message
+                HelperFunctions().displayAlertMessage(title: "Something went wrong", message: error, viewController: self)
+            }
+            else {
+                print("No error but no JSON")
+            }
+        }
+    }
+
+   
+    // MARK: - Navigation
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "finishedSignUp" {
+            
+            let tabBarController = segue.destination as! UITabBarController
+            let destNavController = tabBarController.viewControllers?.last as! UINavigationController
+            
+            let profileVC = destNavController.topViewController as! ProfileViewController
+            
+            profileVC.profileDetail = profileDetail
             
         }
-
-        
-        // Handle duplicate username error
-        // Store everything in UserDefaults
     }
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
+    
 
 }
 

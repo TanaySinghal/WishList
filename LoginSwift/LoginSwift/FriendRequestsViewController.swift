@@ -9,52 +9,44 @@
 import UIKit
 import Alamofire
 
+
 class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, FriendRequestCellDelegate {
 
     @IBOutlet weak var navBar: UINavigationItem!
     
     @IBOutlet weak var tableView: UITableView!
     
-    struct RequestSender {
-        var id: String
-        var fbUserId: String
-        var fullName: String
-        var username: String
-    }
     
-    var requestSenders = [RequestSender]()
+    var requestSenders = [ProfileDetail]()
     
-    var userId: String?
+    var firstTimeLoad = true
+    
+    let refreshControl = UIRefreshControl()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
-        userId = UserDefaults.standard.string(forKey: "user_id")
         
-        // Send GET request to find friend requests
-        Alamofire.request("http://localhost:8080/user/list_friend_requests/" + userId!).responseJSON { response in
-            // New code
-            switch response.result {
-            case .success(let value):
-                if let JSON = response.result.value {
-                    self.refreshTableWithJson(JSON: JSON)
-                }
-                else {
-                    print("Failed to serialize JSON in FriendRequestVC. Here is the result: \(value)")
-                }
-                
-            case .failure(let error):
-                print("Get request from FriendRequestVC failed: \(error)")
-            }
+        //Add refresh control
+        refreshControl.addTarget(self, action: #selector(refreshFromPull), for: .valueChanged)
+        
+        getFriendRequests()
+    }
+
+    // Get updated friend request list whenever view appears
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Add refresh controller
+        self.tableView.addSubview(refreshControl)
+        
+        if firstTimeLoad {
+            firstTimeLoad = false
+            reloadTable()
         }
-        
+        else {
+            getFriendRequests()
+        }
     }
-
-    override func viewDidAppear(_ animated: Bool) {
-        reloadTable()
-    }
-    
     
     
     override func didReceiveMemoryWarning() {
@@ -62,13 +54,51 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
         // Dispose of any resources that can be recreated.
     }
     
-
+    
+    func refreshFromPull() {
+        getFriendRequests()
+        
+        /*
+         If copied and pasted, put this when you're done getting whatever you wanted.
+         
+         if self.refreshControl.isRefreshing {
+            self.refreshControl.endRefreshing()
+         }
+         
+         */
+    }
+    
+    func getFriendRequests() {
+        // Do any additional setup after loading the view.
+        let userId = UserDefaults.standard.string(forKey: "user_id")
+        
+        // Send GET request to find friend requests
+        let urlPath = GetRoutes().listFriendRequests + userId!
+        
+        HelperFunctions().sendGetRequest(urlPath: urlPath) {
+            JSON, errorDescription in
+            
+            // Stop refreshing
+            if self.refreshControl.isRefreshing {
+                self.refreshControl.endRefreshing()
+            }
+            
+            if let json = JSON {
+                self.refreshTableWithJson(JSON: json)
+            }
+            if let error = errorDescription {
+                HelperFunctions().displayAlertMessage(title: "Something went wrong", message: error, viewController: self)
+            }
+            
+        }
+        
+    }
     
     // Also reloads table
     func refreshTableWithJson(JSON: Any) {
         
         // First reset requestSenders
-        requestSenders = [RequestSender]()
+        requestSenders = [ProfileDetail]()
         
         // Next go through array
         if let jsonArray = JSON as? NSMutableArray {
@@ -86,12 +116,18 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
                 let username = parser.parseJsonAsString(json: jsonObject as AnyObject, field: "username")
                 
                 // Create new WishDetail
-                let newRequestSender = RequestSender(
+                let newRequestSender = ProfileDetail(
                     id: id!,
                     fbUserId: fbUserId!,
                     fullName: fullName,
-                    username: username!
+                    username: username!,
+                    aboutMe: nil,
+                    address: nil,
+                    profileState: ProfileStates().strangerProfile,
+                    strangerState: StrangerState().receivedRequest,
+                    image: nil
                 )
+                
                 
                 requestSenders.append(newRequestSender)
                 
@@ -114,7 +150,9 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
     
     
     // MARK: - FriendRequestCellDelegate
-    func modifyFriendRequest(action: String, cell: FriendRequestCell) {
+    func modifyFriendRequest(urlPath: String, cell: FriendRequestCell) {
+        
+        let userId = UserDefaults.standard.string(forKey: "user_id")
         
         // Create JSON
         let parameters: Parameters = [
@@ -123,23 +161,19 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
             "user_id": userId!
         ]
         
-        // Send post request to accept friend request. This returns a JSON with a new list of friend requests, after removing this one.
-        Alamofire.request("http://localhost:8080/user/\(action)_friend_request", method: .post, parameters: parameters, encoding: JSONEncoding.default).responseJSON { response in
-            switch response.result {
-            case .success(let value):
+        // Send post request to accept friend request. 
+        // This returns a JSON with a new list of friend requests, after removing this one.
+        
+        HelperFunctions().sendPostRequest(urlPath: urlPath, parameters: parameters) {
+            JSON, errorDescription in
+            
+            if let json = JSON {
                 
-                if let JSON = response.result.value {
-                    
-                    // Reset table with new data
-                    self.refreshTableWithJson(JSON: JSON)
-                    
-                }
-                else {
-                    print("Failed to serialize JSON in FriendRequestVC. Here is the result: \(value)")
-                }
-                
-            case .failure(let error):
-                print("Post request from FriendRequestVC failed: \(error)")
+                // Reset table with new data
+                self.refreshTableWithJson(JSON: json)
+            }
+            if let error = errorDescription {
+                HelperFunctions().displayAlertMessage(title: "Something went wrong", message: error, viewController: self)
             }
         }
     }
@@ -147,11 +181,15 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
     
     // MARK: - Table
     func reloadTable() {
-        tableView.estimatedRowHeight = 102
-        tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.delegate = self
-        tableView.dataSource = self
-        tableView.reloadData()
+
+        if let table = tableView {
+            table.estimatedRowHeight = 102
+            table.rowHeight = UITableViewAutomaticDimension
+            
+            table.delegate = self
+            table.dataSource = self
+            table.reloadData()
+        }
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -169,6 +207,7 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
             cell.profileImage.image = image
         }
         
+        cell.senderId = requestSenders[row].id
         cell.fullNameLabel.text = requestSenders[row].fullName
         cell.usernameLabel.text = requestSenders[row].username
         
@@ -181,17 +220,25 @@ class FriendRequestsViewController: UIViewController, UITableViewDelegate, UITab
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+        // Do nothing... segue is handled from story board
     }
     
-    /*
+    
     // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+        
+        if segue.identifier == "friendRequestToProfile" {
+            
+            if let indexPath = tableView.indexPathForSelectedRow {
+                
+                let profileVC = segue.destination as! ProfileViewController
+                
+                profileVC.profileDetail = requestSenders[indexPath.row]
+                
+            }
+            
+        }
     }
-    */
+    
 
 }

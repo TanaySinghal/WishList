@@ -24,6 +24,7 @@ class NewWishCell: UITableViewCell, UITextViewDelegate {
     
     @IBOutlet weak var addButton: UIButton!
     let descriptionPlaceholder = "Describe your wish..."
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
