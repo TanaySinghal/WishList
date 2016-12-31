@@ -53,6 +53,7 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
     }
     
     
+    // MARK: - Text Delegate Methods
     // Truncates text views as user types
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         // Truncate string
@@ -75,12 +76,12 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
         return changedText.characters.count <= maxTextViewLength
     }
 
+    
     // MARK: - Button Pressed
     @IBAction func finishRegistration(_ sender: Any) {
         
-        // Check if username is empty
-        // Just in case, do something if it's too long
         
+        // Just in case our delegate does not work
         var username = usernameField.text ?? ""
         var about_me = aboutMeField.text ?? ""
         var address = mailingAddressField.text ?? ""
@@ -89,21 +90,23 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
         if username.characters.count > maxTextFieldLength ||
             username.characters.count < minUsernameLength {
             
-            print ("Username needs to be between 4 and 16 characters.")
+            HelperFunctions().displayAlertMessage(title: "Error", message: "Username needs to be between 4 and 16 characters.", viewController: self)
             return
         }
         
         if about_me.characters.count > maxTextViewLength {
             print ("About me is too long")
+            
+            HelperFunctions().displayAlertMessage(title: "Error", message: "About me is \(about_me.characters.count) characters long. It needs to be less than \(maxTextViewLength) characters.", viewController: self)
             return
         }
         
         if address.characters.count > maxTextViewLength {
-            print ("Address is too long")
+            
+            HelperFunctions().displayAlertMessage(title: "Error", message: "Address is \(address.characters.count) characters long. It needs to be less than \(maxTextViewLength) characters.", viewController: self)
+
             return
         }
-        
-        // If address and about me are empty, make them ""
         
         
         let userId = UserDefaults.standard.string(forKey: "user_id")
@@ -172,15 +175,3 @@ class OneMoreStepViewController: UIViewController, UITextFieldDelegate, UITextVi
 
 }
 
-extension NSRange {
-    func range(for str: String) -> Range<String.Index>? {
-        guard location != NSNotFound else { return nil }
-        
-        guard let fromUTFIndex = str.utf16.index(str.utf16.startIndex, offsetBy: location, limitedBy: str.utf16.endIndex) else { return nil }
-        guard let toUTFIndex = str.utf16.index(fromUTFIndex, offsetBy: length, limitedBy: str.utf16.endIndex) else { return nil }
-        guard let fromIndex = String.Index(fromUTFIndex, within: str) else { return nil }
-        guard let toIndex = String.Index(toUTFIndex, within: str) else { return nil }
-        
-        return fromIndex ..< toIndex
-    }
-}

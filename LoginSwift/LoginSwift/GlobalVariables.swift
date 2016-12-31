@@ -9,8 +9,10 @@
 import UIKit
 import Foundation
 
+// MARK: - Constants
 let hostUrl = "http://localhost:8080"
 
+// MARK: - States
 struct ProfileStates {
     let myProfile = "myProfile"
     let friendProfile = "friendProfile"
@@ -23,6 +25,7 @@ struct StrangerState {
     let none = "none"
 }
 
+// MARK: - Details
 struct ProfileDetail {
     var id: String
     var fbUserId: String
@@ -46,7 +49,10 @@ struct WishDetail {
     var isPrivate: Bool
 }
 
+// MARK: - Networking
 struct GetRoutes {
+    let removeUser = "/user/remove/" // + userId
+    
     let listFriendRequests = "/user/list_friend_requests/" // + userId
     let listFriends = "/user/list_friends/" // + userId
     
@@ -68,4 +74,18 @@ struct PostRoutes {
     
     let removeFriend = "/user/remove_friend/"
     
+}
+
+// MARK: - Extensions
+extension NSRange {
+    func range(for str: String) -> Range<String.Index>? {
+        guard location != NSNotFound else { return nil }
+        
+        guard let fromUTFIndex = str.utf16.index(str.utf16.startIndex, offsetBy: location, limitedBy: str.utf16.endIndex) else { return nil }
+        guard let toUTFIndex = str.utf16.index(fromUTFIndex, offsetBy: length, limitedBy: str.utf16.endIndex) else { return nil }
+        guard let fromIndex = String.Index(fromUTFIndex, within: str) else { return nil }
+        guard let toIndex = String.Index(toUTFIndex, within: str) else { return nil }
+        
+        return fromIndex ..< toIndex
+    }
 }

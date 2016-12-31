@@ -119,15 +119,15 @@
 		8B50F8B31E0BB5A400B895D1 /* ViewControllers */ = {
 			isa = PBXGroup;
 			children = (
-				8B50F8B41E0BB61300B895D1 /* FriendRequestsViewController.swift */,
 				8B9B80121E107CF100850B3D /* GlobalVariables.swift */,
 				8B307FA91E0AC5F9009B046B /* ViewController.swift */,
-				8B9141EB1E0B0F9500D93C0B /* SettingsViewController.swift */,
-				8B50F8A41E0B150D00B895D1 /* ProfileViewController.swift */,
 				8B50F8A81E0B20E600B895D1 /* OneMoreStepViewController.swift */,
+				8B50F8B41E0BB61300B895D1 /* FriendRequestsViewController.swift */,
 				8B2733571E0CA6530012EC86 /* FriendsViewController.swift */,
 				8B2733591E0CB0D60012EC86 /* SearchViewController.swift */,
+				8B50F8A41E0B150D00B895D1 /* ProfileViewController.swift */,
 				8BC805271E1248560062135C /* WishDetailViewController.swift */,
+				8B9141EB1E0B0F9500D93C0B /* SettingsViewController.swift */,
 			);
 			name = ViewControllers;
 			sourceTree = "<group>";

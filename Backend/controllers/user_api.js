@@ -3,17 +3,20 @@ var User = require('../models/user.js');
 var hf = require('../helper_functions.js');
 
 // Methods we have:
-// - authorize_from_fb,
-// - find_by_id,
-// - update,
-// - add_friend,
-// - remove_friend
+// - authorize_from_fb (post)
+// - remove_user (get)
+// - find_by_id (get)
+// - update (post)
+// - search (post)
+// - remove_user (get)
 
-// Untested methods:
-// - send_friend_request (post),
+// - list_friends (get)
+// - remove_friend (post)
+
+// - send_friend_request (post)
 // - friend_request_count (get)
-// - list_friend_requests (get),
-// - remove_friend_request (post),
+// - list_friend_requests (get)
+// - remove_friend_request (post)
 // - accept_friend_request (post)
 
 // post request
@@ -65,6 +68,21 @@ exports.authorize_from_fb = function (req, res) {
 			 res.send("ERROR FB ID is not unique.");
 		 }
 	});
+}
+
+exports.remove = function (req, res) {
+
+    User.findOne({_id: req.params.user_id}, function (err, user) {
+        if (err) {
+					res.send("ERROR \n" + err);
+					return;
+        }
+
+        user.remove();
+				// Don't know what to do
+				res.json(user);
+    })
+
 }
 
 exports.find_by_id = function (req, res) {
@@ -158,36 +176,38 @@ exports.search = function (req, res) {
 	});
 }
 
+// This is just for testing.. not used in app
+/*exports.remove_user_interaction = function (req, res) {
+
+	var user_id = req.params.user_id;
+
+	var query = {
+		$or: [
+			{ friend_requests: { $eq : user_id } },
+			{ sent_friend_requests: { $eq : user_id } },
+			{ friends: { $eq : user_id } }
+		]
+	};
+
+	var action = {
+		$pull: {
+			sent_friend_requests: user_id,
+			friend_requests: user_id,
+			friends: user_id
+		}
+	};
+
+	// Update all users that match query with action
+	User.update(query, action, {"multi": true})
+	.exec(function (err, result) {
+		if(err) res.send("ERROR: \n" + err);
+
+		res.send(result);
+	});
 
 
-/*{
-	"my_user_id": "585b0836c7f7f351060e33ba",
-	"friend_id": "585ca1fdb9fe64d1a65992cd"
 }*/
-/*exports.get_stranger_state = function (req, res) {
 
-		var my_user_id = req.body.my_user_id;
-		var stranger_id = req.body.friend_id;
-
-		User.findOne({_id: stranger_id})
-		.lean() // Return a native JavaScript JSON object
-		.exec(function (err, stranger) {
-				if(err) {
-					res.send("ERROR: \n" + err);
-					return;
-				}
-
-				var json_to_return = {}
-
-				var friend_requests = stranger.friend_requests;
-				var sent_friend_requests = friend.sent_friend_requests;
-
-				json_to_return.stranger_state = hf.getStrangerState(friend_requests, sent_friend_requests, my_user_id);
-
-				res.json(json_to_return);
-
-		});
-}*/
 
 // MARK - Friends
 // GET friends
@@ -214,39 +234,39 @@ exports.remove_friend = function (req, res) {
 	var user_id = req.body.user_id;
 	var friend_id = req.body.friend_id;
 
-	// Search for this user
-	User.findOne({_id : user_id}, function(err, user) {
+	// Search for users
+	var query = {
+  		$or: [
+  			{ _id: user_id },
+  			{ _id: friend_id }
+  		]
+	};
+
+	// Remove each other as friends
+	var action = {
+		$pull: {
+			friends: friend_id,
+			friends: user_id,
+		}
+	};
+
+	User.update(query, action, {"multi": true}, function (err, user) {
+
 		if(err) {
 			res.send("ERROR: \n" + err);
 			return;
 		}
 
-		// Search for friend
 		User.findOne({_id: friend_id}, function (err, friend) {
-			if(err) {
-				res.send("ERROR: \n" + err);
-				return;
-			}
-
-			// Check if already not friends
-			if (!(hf.contains(user.friends, friend._id) &&
-					hf.contains(friend.friends, user._id))) {
-					res.send("Already not friends.");
+				if(err) {
+					res.send("ERROR: \n" + err);
 					return;
-			}
+				}
 
-			// Remove each other as friends
-			user.friends.pull(friend._id);
-			friend.friends.pull(user._id);
+				// Send unfriended friend
+				res.json(friend);
 
-			// Update users
-			friend.save();
-			user.save();
-
-			// Send friend
-			res.send(friend);
 		});
-
 	});
 }
 
@@ -345,39 +365,39 @@ exports.list_friend_requests = function (req, res) {
   "user_id": "...."
 }*/
 exports.remove_friend_request = function (req, res) {
-
 		var user_id = req.body.user_id;
 		var sender_id = req.body.sender_id;
 
-		// Search for sender
-		var query1 = { _id: sender_id}
-		// Remove user from sender's sent friend requests
-		var action1 = { "$pull": { "sent_friend_requests": user_id } }
+		// Search for users
+		var query = {
+	  		$or: [
+	  			{ _id: sender_id },
+	  			{ _id: user_id }
+	  		]
+		};
 
-		User.update(query1, action1, {"multi": true}, function (err, sender) {
+		// Remove sent and received request
+		var action = {
+			$pull: {
+				// Remove user_id from sender's sent_friend_requests
+				sent_friend_requests: user_id,
+				// Remove sender_id from user's friend_requests
+				friend_requests: sender_id
+			}
+		};
+
+		User.update(query, action, {"multi": true}, function (err, sender) {
 
 			if(err) {
 				res.send("ERROR: \n" + err);
 				return;
 			}
 
-			// Search for my user
-			var query2 = { _id: user_id}
-			// Remove sender from user's friend requests
-			var action2 = { "$pull": { "friend_requests": sender_id } }
+			// Return new list of friend requests
+			User.findOne({_id: user_id}, function(err, user) {
+				res.json(user.friend_requests);
+			}).populate('friend_requests');
 
-			User.findOneAndUpdate(query2, action2, {"multi": true}, function (err, user) {
-					if(err) {
-						res.send("ERROR: \n" + err);
-						return;
-					}
-
-					// Return new list of friend requests
-					User.findOne(query2, function(err, user) {
-						res.json(user.friend_requests);
-					}).populate('friend_requests');
-
-			})
 		});
 }
 
@@ -393,11 +413,15 @@ exports.accept_friend_request = function(req, res) {
 	var user_id = req.body.user_id;
 	var sender_id = req.body.sender_id;
 
+	// Can't do new method because addToSet would add two friends to both
+
 	// Search for sender
 	var query1 = {
 		_id: sender_id,
 		// If not friends already
-		friends: {$ne: sender_id}
+		friends: {$ne: user_id},
+		// And if sender has sent a request
+		sent_friend_requests: {$eq: user_id}
 	}
 	var action1 = {
 		// Remove user from sender's sent friend requests
@@ -407,7 +431,7 @@ exports.accept_friend_request = function(req, res) {
 	}
 
 	User.update(query1, action1, {"multi": true}, function (err, sender) {
-
+ 
 		if(err) {
 			res.send("ERROR: \n" + err);
 			return;
@@ -417,7 +441,9 @@ exports.accept_friend_request = function(req, res) {
 		var query2 = {
 			_id: user_id,
 			// If not friends already
-			friends: {$ne: sender_id}
+			friends: {$ne: sender_id},
+			// And if user has received a request
+			friend_requests: {$eq: sender_id}
 		}
 		var action2 = {
 			// Remove sender from user's friend requests

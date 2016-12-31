@@ -30,9 +30,9 @@ class HelperFunctions {
     
     // This shows message and dismisses on "OK"
     func displayAlertMessage(title:String, message:String, viewController:AnyObject) {
-        let myAlert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert);
+        let myAlert = UIAlertController(title: title, message: message, preferredStyle: .alert);
         
-        let okAction = UIAlertAction(title:"OK", style:UIAlertActionStyle.default, handler:nil);
+        let okAction = UIAlertAction(title:"OK", style: .default, handler: nil);
         
         myAlert.addAction(okAction);
         viewController.present(myAlert, animated: true, completion:nil);
@@ -40,23 +40,21 @@ class HelperFunctions {
     
     
     //This allows any action on OK or Cancel
-    func displayConfirmMessage(title:String, message: String, viewController:AnyObject, continueAction:Void, cancelAction:Void) {
-        let myAlert = UIAlertController(title: title, message: message, preferredStyle:UIAlertControllerStyle.alert);
+    func displayConfirmMessage(title: String, message: String, viewController: AnyObject, completionHandler: @escaping(Bool) -> Void) {
+        let myAlert = UIAlertController(title: title, message: message, preferredStyle: .alert);
         
         
         let continueButton = UIAlertAction(title: "Continue", style: .default) {
             //Move to next page
             action in
-            
-            continueAction;
+
+            completionHandler(true)
         }
         
-        
         let cancelButton = UIAlertAction(title: "Cancel", style: .default) {
-            //Move to next page
             action in
             
-            cancelAction;
+            completionHandler(false)
         }
         
         myAlert.addAction(continueButton);
@@ -66,7 +64,7 @@ class HelperFunctions {
     
     
     // MARK - Networking
-    func loadImageFromUrlWithCompletion(imageUrl: String, completionHandler: @escaping (UIImage?) -> ()) {
+    func loadImageFromUrlWithCompletion(imageUrl: String, completionHandler: @escaping (UIImage?) -> Void) {
         
         // Create Url from string
         let url = NSURL(string: imageUrl)!
@@ -101,7 +99,7 @@ class HelperFunctions {
      // profileImage.image = image
     }*/
     
-    func loadImageFromFacebookWithCompletion(facebookUserId: String, width: Int, height: Int, completionHandler:@escaping (UIImage?) -> ()) {
+    func loadImageFromFacebookWithCompletion(facebookUserId: String, width: Int, height: Int, completionHandler:@escaping (UIImage?) -> Void) {
         
         // Create Url from string
         let imageUrl = "http://graph.facebook.com/\(facebookUserId)/picture?width=\(width)&height=\(height)"

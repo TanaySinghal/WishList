@@ -40,5 +40,33 @@ var userSchema = new Schema({
 	create_date: { type: Date, default: Date.now}
 });
 
+// Test if this works...
+userSchema.pre('remove', function(next) {
+
+    var User = mongoose.model('User', userSchema, 'user');
+    console.log("Doing remove hook");
+
+    var user_id = this._id;
+
+    // Do something
+  	var query = {
+  		$or: [
+  			{ friend_requests: { $eq : user_id } },
+  			{ sent_friend_requests: { $eq : user_id } },
+  			{ friends: { $eq : user_id } }
+  		]
+  	};
+
+  	var action = {
+  		$pull: {
+  			sent_friend_requests: user_id,
+  			friend_requests: user_id,
+  			friends: user_id
+  		}
+  	};
+
+    // Update all users that match query with action
+    User.update(query, action, {"multi": true}, next);
+});
 
 module.exports = mongoose.model('User', userSchema, 'user');

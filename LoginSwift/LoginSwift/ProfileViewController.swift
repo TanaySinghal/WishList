@@ -137,7 +137,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     func configureFriendView() {
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Unfriend", style: .plain, target: self, action: #selector(unfriend))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Unfriend", style: .plain, target: self, action: #selector(confirmUnfriend))
     }
     
     func configureStrangerView() {
@@ -451,7 +451,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     
-    // Send or remove friend request
+    // Send or cancel friend request
     @IBAction func friendRequestPressed(_ sender: Any) {
         
         let strangerState = profileDetail!.strangerState
@@ -467,10 +467,12 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         
         
         var sending: Bool = true
+        // Send friend request
         var urlPath = PostRoutes().sendFriendRequest
         
         if strangerState == StrangerState().sentRequest {
             sending = false
+            // Cancel friend request
             urlPath = PostRoutes().removeFriendRequest
         }
         
@@ -545,7 +547,19 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     
+    func confirmUnfriend() {
+        HelperFunctions().displayConfirmMessage(title: "Unfriending", message: "Are you sure you want to unfriend this user?", viewController: self) {
+            completed in
+            
+            if completed {
+                self.unfriend()
+            }
+        }
+    }
+    
+    
     func unfriend() {
+        
         print("Unfriending \(profileDetail!.fullName) ...")
         
         let myUserId = UserDefaults.standard.string(forKey: "user_id")
@@ -590,10 +604,22 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         self.performSegue(withIdentifier: "settingsSegue", sender: self)
     }
     
+    //Unwind segue
+    @IBAction func unwindFromSettingsToProfileVC(segue:UIStoryboardSegue) {
+        
+        let source = segue.source as! SettingsViewController
+        profileDetail = source.profileDetail
+    }
+    
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+        
+        if segue.identifier == "settingsSegue" {
+            let destination = segue.destination as! SettingsViewController
+            destination.profileDetail = profileDetail
+        }
         
         if segue.identifier == "wishDetail" {
             
