@@ -2,24 +2,24 @@
 var User = require('../models/user.js');
 var hf = require('../helper_functions.js');
 
-// Methods we have:
-// - authorize_from_fb (post)
-// - remove (get)
-// - find_by_id (get)
-// - update (post)
-// - search (post)
-// - remove (get)
+// Documentation:
+// - authorize_from_fb (post) logs in or registers a user using Facebook information
+// - remove (get) deletes an account and all its interactions
+// - find_by_id (get) searches for a user by their id
+// - update (post) updates a user's profile given information to update
+// - search (post) searches for users given search text
 
-// - list_friends (get)
-// - remove_friend (post)
+// - list_friends (get) lists a user's friends
+// - remove_friend (post) removes a user's friend
 
-// - send_friend_request (post)
-// - friend_request_count (get)
-// - list_friend_requests (get)
-// - remove_friend_request (post)
-// - accept_friend_request (post)
+// - send_friend_request (post) sends a friend request from one user to another
+// - friend_request_count (get) counts the number of friend requests a user has
+// - list_friend_requests (get) lists a user's friend requests
+// - remove_friend_request (post) removes a user's friend request
+// - accept_friend_request (post) accepts a user's friend request
 
-// post request
+// Implementation:
+// Post request
 /*{
 	"fb_user_id": "...",
   "first_name": "Francesco",
@@ -70,6 +70,7 @@ exports.authorize_from_fb = function (req, res) {
 	});
 }
 
+// Get request
 exports.remove = function (req, res) {
 
     User.findOne({_id: req.params.user_id}, function (err, user) {
@@ -79,12 +80,13 @@ exports.remove = function (req, res) {
         }
 
         user.remove();
-				// Don't know what to do
+				// Don't know what to return
 				res.json(user);
     })
 
 }
 
+// Get request
 exports.find_by_id = function (req, res) {
 
   User.findOne({_id: req.params.user_id})
@@ -97,7 +99,11 @@ exports.find_by_id = function (req, res) {
 
 }
 
-
+// Post request
+/*{
+  "username": "fbondi",
+  "about_me": "I am cool"
+}*/
 exports.update = function(req, res) {
 	var query = {
 		_id: {$eq: req.body.user_id}
@@ -127,6 +133,7 @@ exports.update = function(req, res) {
 	});
 }
 
+// Post request
 /*{
 	"searcher_id": "...",
 	"search_text": "Tanay"
@@ -210,7 +217,7 @@ exports.search = function (req, res) {
 
 
 // MARK - Friends
-// GET friends
+// Get request
 exports.list_friends = function (req, res) {
 	var user_id = req.params.user_id;
 
@@ -225,7 +232,7 @@ exports.list_friends = function (req, res) {
 }
 
 
-// Sample json:
+// Post request
 /*{
   "user_id": "....",
   "friend_id": "...."
@@ -271,6 +278,7 @@ exports.remove_friend = function (req, res) {
 
 
 // MARK - Friend Requests
+// Post request
 // Sample json:
 /*{
   "sender_id": "....",
@@ -328,7 +336,7 @@ exports.send_friend_request = function(req, res) {
 		});
 }
 
-// GET request
+// Get request
 exports.friend_request_count = function (req, res) {
 	var user_id = req.params.user_id;
 
@@ -343,7 +351,7 @@ exports.friend_request_count = function (req, res) {
 	});
 }
 
-// GET request
+// Get request
 exports.list_friend_requests = function (req, res) {
 	var user_id = req.params.user_id;
 
@@ -358,6 +366,7 @@ exports.list_friend_requests = function (req, res) {
 }
 
 
+// Post request
 // Sample json:
 /*{
   "sender_id": "....",
@@ -400,7 +409,7 @@ exports.remove_friend_request = function (req, res) {
 		});
 }
 
-
+// Post request
 // Sample json:
 /*{
   "sender_id": "....",
