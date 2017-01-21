@@ -4,11 +4,11 @@ var hf = require('../helper_functions.js');
 
 // Methods we have:
 // - authorize_from_fb (post)
-// - remove_user (get)
+// - remove (get)
 // - find_by_id (get)
 // - update (post)
 // - search (post)
-// - remove_user (get)
+// - remove (get)
 
 // - list_friends (get)
 // - remove_friend (post)
@@ -245,8 +245,7 @@ exports.remove_friend = function (req, res) {
 	// Remove each other as friends
 	var action = {
 		$pull: {
-			friends: friend_id,
-			friends: user_id,
+			friends: { $in: [ user_id, friend_id] }
 		}
 	};
 
@@ -431,7 +430,7 @@ exports.accept_friend_request = function(req, res) {
 	}
 
 	User.update(query1, action1, {"multi": true}, function (err, sender) {
- 
+
 		if(err) {
 			res.send("ERROR: \n" + err);
 			return;

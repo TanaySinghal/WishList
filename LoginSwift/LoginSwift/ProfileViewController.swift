@@ -187,16 +187,16 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         publicWishDetails = [WishDetail]()
         privateWishDetails = [WishDetail]()
         
+        // Append blank wish because our first cell is an add wish cell
+        if isMe() {
+            publicWishDetails.append(WishDetail(wishId: "", ownerId: "", wish: "", wishDescription: "", isPrivate: false))
+            privateWishDetails.append(WishDetail(wishId: "", ownerId: "", wish: "", wishDescription: "", isPrivate: true))
+        }
+        
+        
         if let jsonArray = JSON as? NSMutableArray {
             
             let parser = JSONParser()
-            
-            // Append blank wish because our first cell is an add wish cell
-            if isMe() {
-                publicWishDetails.append(WishDetail(wishId: "", ownerId: "", wish: "", wishDescription: "", isPrivate: false))
-                privateWishDetails.append(WishDetail(wishId: "", ownerId: "", wish: "", wishDescription: "", isPrivate: true))
-            }
-            
             
             for jsonObject in jsonArray {
                 
