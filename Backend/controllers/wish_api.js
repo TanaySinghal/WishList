@@ -2,6 +2,7 @@
 var Wish = require('../models/wish.js');
 var User = require('../models/user.js');
 
+// Get request
 exports.find_wish_by_user = function(req, res) {
   var query = {owner: req.params.owner_id}
 
@@ -14,7 +15,7 @@ exports.find_wish_by_user = function(req, res) {
   });
 }
 
-
+// Get request
 exports.find_public_wish_by_user = function(req, res) {
   var query = {
     owner: req.params.owner_id,
@@ -30,7 +31,7 @@ exports.find_public_wish_by_user = function(req, res) {
   });
 }
 
-
+// Get request
 exports.find_one = function(req, res) {
   // Return list
   Wish.findOne({_id: req.params.wish_id})
@@ -41,7 +42,7 @@ exports.find_one = function(req, res) {
   });
 }
 
-
+// Post request
 /*{
   "owner": "owner_id",
   "text": "Cute Puppy",
@@ -50,15 +51,12 @@ exports.find_one = function(req, res) {
 }*/
 exports.create = function (req ,res) {
 
-  var _owner = req.body.owner;
-
   var wish = new Wish({
-      owner: _owner,
+      owner: req.body.owner,
       text: req.body.text,
       description: req.body.description,
       is_private: req.body.is_private
   });
-
 
   wish.save(function (err, wish) {
     if (err) {
@@ -66,21 +64,19 @@ exports.create = function (req ,res) {
       return;
     }
 
-    var str = "Added wish with ID " + wish._id + " and text " + wish.text;
-    console.log(str);
+		// Add wish to user's list of wishes
+  	var action = {
+  		$addToSet: { wishes: wish._id }
+  	}
 
-    // Add wish to user's wish list
-    User.findOne({_id: _owner}, function (err, user) {
+  	User.update({_id: wish.owner}, action, function (err, user) {
       if (err) {
         res.send("ERROR \n" + err);
         return;
       }
 
-      user.wishes.push(wish._id);
-      user.save();
-
-      // Return list of wishes
-      Wish.find(function (err, wishes) {
+      // List user's wishes
+      Wish.find({owner: wish.owner}, function (err, wishes) {
         if (err) {
           res.send("ERROR \n" + err);
           return;
@@ -91,31 +87,33 @@ exports.create = function (req ,res) {
   });
 }
 
-
+// Get request
 exports.delete = function (req ,res) {
+
   // Find wish
-  Wish.findOne({_id: req.params.wish_id}, function (err, wish){
+  Wish.findOne({_id: req.params.wish_id}, function (err, wish) {
 
     // Remove wish
     wish.remove();
 
-    // Find user
-    User.findOne({_id: wish.owner}, function (err, user) {
-      if (err) res.send("ERROR \n" + err);
+    var action = {
+      $pull: { wishes: wish._id }
+    }
 
-      // Remove wish from user
-      user.wishes.pull(wish._id);
-      user.save();
+    User.update({_id: wish.owner}, action, {"multi": true}, function (err, user) {
+      if (err) {
+        res.send("ERROR \n" + err);
+        return;
+      }
 
-      var str = "Removed wish with ID " + wish._id + " from owner " + user._id;
-      console.log(str);
-
-      // Return list of wishes
-      Wish.find(function (err, wishes) {
-        if (err) res.send("ERROR \n" + err);
+      // List user's wishes
+      Wish.find({owner: wish.owner}, function (err, wishes) {
+        if (err) {
+          res.send("ERROR \n" + err);
+          return;
+        }
         res.json(wishes);
       });
     });
-
   });
 }

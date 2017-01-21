@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8B307FA31E0AC5F8009B046B"
-               BuildableName = "LoginSwift.app"
-               BlueprintName = "LoginSwift"
-               ReferencedContainer = "container:LoginSwift.xcodeproj">
+               BuildableName = "Wishify.app"
+               BlueprintName = "Wishify"
+               ReferencedContainer = "container:Wishify.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8B307FA31E0AC5F8009B046B"
-            BuildableName = "LoginSwift.app"
-            BlueprintName = "LoginSwift"
-            ReferencedContainer = "container:LoginSwift.xcodeproj">
+            BuildableName = "Wishify.app"
+            BlueprintName = "Wishify"
+            ReferencedContainer = "container:Wishify.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8B307FA31E0AC5F8009B046B"
-            BuildableName = "LoginSwift.app"
-            BlueprintName = "LoginSwift"
-            ReferencedContainer = "container:LoginSwift.xcodeproj">
+            BuildableName = "Wishify.app"
+            BlueprintName = "Wishify"
+            ReferencedContainer = "container:Wishify.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -75,9 +75,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8B307FA31E0AC5F8009B046B"
-            BuildableName = "LoginSwift.app"
-            BlueprintName = "LoginSwift"
-            ReferencedContainer = "container:LoginSwift.xcodeproj">
+            BuildableName = "Wishify.app"
+            BlueprintName = "Wishify"
+            ReferencedContainer = "container:Wishify.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -5,7 +5,7 @@
       location = "group:LoginSwift/Media.xcassets">
    </FileRef>
    <FileRef
-      location = "group:LoginSwift.xcodeproj">
+      location = "group:/Users/tanaysinghal/Documents/Developer/Wishify/LoginSwift/Wishify.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Pods/Pods.xcodeproj">

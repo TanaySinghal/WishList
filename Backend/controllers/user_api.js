@@ -82,7 +82,7 @@ exports.remove = function (req, res) {
         user.remove();
 				// Don't know what to return
 				res.json(user);
-    })
+    });
 
 }
 
@@ -182,39 +182,6 @@ exports.search = function (req, res) {
 			res.json(usersJSON);
 	});
 }
-
-// This is just for testing.. not used in app
-/*exports.remove_user_interaction = function (req, res) {
-
-	var user_id = req.params.user_id;
-
-	var query = {
-		$or: [
-			{ friend_requests: { $eq : user_id } },
-			{ sent_friend_requests: { $eq : user_id } },
-			{ friends: { $eq : user_id } }
-		]
-	};
-
-	var action = {
-		$pull: {
-			sent_friend_requests: user_id,
-			friend_requests: user_id,
-			friends: user_id
-		}
-	};
-
-	// Update all users that match query with action
-	User.update(query, action, {"multi": true})
-	.exec(function (err, result) {
-		if(err) res.send("ERROR: \n" + err);
-
-		res.send(result);
-	});
-
-
-}*/
-
 
 // MARK - Friends
 // Get request

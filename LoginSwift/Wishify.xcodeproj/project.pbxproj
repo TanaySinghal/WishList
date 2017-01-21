@@ -38,7 +38,7 @@
 		8B2733571E0CA6530012EC86 /* FriendsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsViewController.swift; sourceTree = "<group>"; };
 		8B2733591E0CB0D60012EC86 /* SearchViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchViewController.swift; sourceTree = "<group>"; };
 		8B27335B1E0CB3020012EC86 /* SearchResultCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchResultCell.swift; sourceTree = "<group>"; };
-		8B307FA41E0AC5F9009B046B /* LoginSwift.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LoginSwift.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B307FA41E0AC5F9009B046B /* Wishify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wishify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B307FA71E0AC5F9009B046B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8B307FA91E0AC5F9009B046B /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		8B307FAC1E0AC5F9009B046B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -83,7 +83,7 @@
 		8B307FA51E0AC5F9009B046B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8B307FA41E0AC5F9009B046B /* LoginSwift.app */,
+				8B307FA41E0AC5F9009B046B /* Wishify.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -152,9 +152,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8B307FA31E0AC5F8009B046B /* LoginSwift */ = {
+		8B307FA31E0AC5F8009B046B /* Wishify */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8B307FB61E0AC5F9009B046B /* Build configuration list for PBXNativeTarget "LoginSwift" */;
+			buildConfigurationList = 8B307FB61E0AC5F9009B046B /* Build configuration list for PBXNativeTarget "Wishify" */;
 			buildPhases = (
 				2E351A44058028B6B2C6F3B1 /* [CP] Check Pods Manifest.lock */,
 				8B307FA01E0AC5F8009B046B /* Sources */,
@@ -167,9 +167,9 @@
 			);
 			dependencies = (
 			);
-			name = LoginSwift;
+			name = Wishify;
 			productName = LoginSwift;
-			productReference = 8B307FA41E0AC5F9009B046B /* LoginSwift.app */;
+			productReference = 8B307FA41E0AC5F9009B046B /* Wishify.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -188,7 +188,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 8B307F9F1E0AC5F8009B046B /* Build configuration list for PBXProject "LoginSwift" */;
+			buildConfigurationList = 8B307F9F1E0AC5F8009B046B /* Build configuration list for PBXProject "Wishify" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -201,7 +201,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8B307FA31E0AC5F8009B046B /* LoginSwift */,
+				8B307FA31E0AC5F8009B046B /* Wishify */,
 			);
 		};
 /* End PBXProject section */
@@ -415,7 +415,7 @@
 				INFOPLIST_FILE = LoginSwift/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.WiseTurtleStudios.LoginSwift;
+				PRODUCT_BUNDLE_IDENTIFIER = com.WiseTurtleStudios.Wishify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
@@ -429,7 +429,7 @@
 				INFOPLIST_FILE = LoginSwift/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.WiseTurtleStudios.LoginSwift;
+				PRODUCT_BUNDLE_IDENTIFIER = com.WiseTurtleStudios.Wishify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
@@ -438,7 +438,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8B307F9F1E0AC5F8009B046B /* Build configuration list for PBXProject "LoginSwift" */ = {
+		8B307F9F1E0AC5F8009B046B /* Build configuration list for PBXProject "Wishify" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8B307FB41E0AC5F9009B046B /* Debug */,
@@ -447,7 +447,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8B307FB61E0AC5F9009B046B /* Build configuration list for PBXNativeTarget "LoginSwift" */ = {
+		8B307FB61E0AC5F9009B046B /* Build configuration list for PBXNativeTarget "Wishify" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8B307FB71E0AC5F9009B046B /* Debug */,

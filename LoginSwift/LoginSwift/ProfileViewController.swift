@@ -512,6 +512,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     // Add wish button pressed
+    // TODO: This doesn't work
     func newWishAdded(cell: NewWishCell, wish: String, wishDescription: String) {
         
         // Create JSON
